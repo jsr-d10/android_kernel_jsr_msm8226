@@ -1410,21 +1410,27 @@ static ssize_t store_timer_rate(struct kobject *kobj,
 			struct attribute *attr, const char *buf, size_t count)
 {
 	int ret;
-	unsigned long val;
+	unsigned long val, val_round;
 #ifdef CONFIG_MODE_AUTO_CHANGE
 	unsigned long flags2;
 #endif
 	ret = strict_strtoul(buf, 0, &val);
 	if (ret < 0)
 		return ret;
+
+	val_round = jiffies_to_usecs(usecs_to_jiffies(val));
+	if (val != val_round)
+		pr_warn("timer_rate not aligned to jiffy. Rounded up to %lu\n",
+			val_round);
+
 #ifdef CONFIG_MODE_AUTO_CHANGE
 	spin_lock_irqsave(&mode_lock, flags2);
-	timer_rate_set[param_index] = val;
+	timer_rate_set[param_index] = val_round;
 	if (cur_param_index == param_index)
-		timer_rate = val;
+		timer_rate = val_round;
 	spin_unlock_irqrestore(&mode_lock, flags2);
 #else
-	timer_rate = val;
+	timer_rate = val_round;
 #endif
 	return count;
 }
