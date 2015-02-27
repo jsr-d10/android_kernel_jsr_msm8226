@@ -11,6 +11,10 @@
  */
 
 /dts-v1/;
+
+/* memory area of pmem_log */
+/memreserve/ 0x7f200000 0x100000;
+
 /include/ "msm8226-v2.dtsi"
 /include/ "msm8226-qrd.dtsi"
 /include/ "msm8226-jsr-i2c.dtsi"
