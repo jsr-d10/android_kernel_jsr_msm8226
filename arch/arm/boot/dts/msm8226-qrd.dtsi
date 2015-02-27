@@ -79,6 +79,15 @@
 		compatible = "gpio-keys";
 		input-name = "gpio-keys";
 
+		function_key {
+			label = "function";
+			gpios = <&msmgpio 107 0x1>;
+			linux,input-type = <1>;
+			linux,code = <249>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+		};
+
 		vol_up {
 			label = "volume_up";
 			gpios = <&msmgpio 106 0x1>;
