@@ -75,6 +75,28 @@
 		qcom,y-offset = <0>;
 	};
 
+	flashlight: qcom,flash {
+		cell-index = <0>;
+		compatible = "qcom,leds-gpio-flash";
+		status = "okay";
+		qcom,flash-en = <&msmgpio 32 0>;
+		qcom,flash-now = <&msmgpio 31 0>;
+		linux,name = "flashlight";
+		linux,default-trigger = "flashlight-trigger";
+		qcom,current = <255>;
+	};
+
+	torchlight: qcom,torch {
+		cell-index = <1>;
+		compatible = "qcom,leds-gpio-flash";
+		status = "okay";
+		qcom,flash-en = <&msmgpio 32 0>;
+		qcom,flash-now = <&msmgpio 31 0>;
+		linux,name = "led:torch";
+		linux,default-trigger = "torch-trigger";
+		qcom,current = <127>;
+	};
+	
 	gpio_keys {
 		compatible = "gpio-keys";
 		input-name = "gpio-keys";
