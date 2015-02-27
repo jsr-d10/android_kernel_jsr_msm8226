@@ -48,6 +48,9 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/printk.h>
 
+#include <linux/io.h>
+#include <linux/vmalloc.h>
+
 /*
  * Architectures can override it:
  */
@@ -714,8 +717,23 @@ static void call_console_drivers(unsigned start, unsigned end)
 	_call_console_drivers(start_print, end, msg_level);
 }
 
+static int log_no_ring = 0;
+
+static int __init log_no_ring_setup(char *str)
+{
+	get_option(&str, &log_no_ring);
+	return 0;
+}
+early_param("log_no_ring", log_no_ring_setup);
+
+static void emit_log_char_pmem(char c);
+
 static void emit_log_char(char c)
 {
+	if (log_no_ring && log_end - log_start >= log_buf_len) return;
+
+	emit_log_char_pmem(c);
+
 	LOG_BUF(log_end) = c;
 	log_end++;
 	if (log_end - log_start > log_buf_len)
@@ -1876,3 +1894,108 @@ void kmsg_dump(enum kmsg_dump_reason reason)
 	rcu_read_unlock();
 }
 #endif
+
+// ----------------------- stopnum ------------------------
+
+static int boot_stop_num; 
+
+static int __init boot_stop_num_setup(char *str)
+{
+  get_option(&str, &boot_stop_num);
+  return 0;
+}
+early_param("stopnum", boot_stop_num_setup);
+
+void set_stop_num(int num)
+{
+  boot_stop_num = num;
+}
+
+int do_stop_num(int x)
+{
+  if (boot_stop_num <= 0) return 0;
+  if (x >= boot_stop_num) {
+    while (1) {
+      x++;
+    }
+  }
+  return 0;
+}
+
+int get_stop_num(void)
+{
+  return boot_stop_num;
+}
+
+// ----------------- pmem log sys ---------------------------------
+
+static int      pmem_log_cnt = 0;
+static void   * pmem_virt = NULL;
+static uint32_t pmem_log_size = 0;
+static int      pmem_log_beg = 0;
+
+static int __init pmem_log_cnt_setup(char *str)
+{
+	get_option(&str, &pmem_log_cnt);
+	return 0;
+}
+early_param("pmemlog", pmem_log_cnt_setup);
+
+
+#define PMEM_LOG_ADDR   (0x7f200000)
+#define PMEM_LOG_PAGES  70
+#define PMEM_LOG_SIZE   (PAGE_SIZE * PMEM_LOG_PAGES)
+
+int pmem_log_init(void)
+{
+  uint32_t x;
+	pgprot_t prot;
+	struct page **pages;
+	phys_addr_t addr;
+
+	if (pmem_virt) return 1;
+	if (pmem_log_cnt <= 0) return 0;
+	
+	prot = pgprot_noncached(PAGE_KERNEL);
+	pages = kmalloc(sizeof(struct page *) * PMEM_LOG_PAGES, GFP_KERNEL);
+	if (!pages) return 0;
+	for (x = 0; x < PMEM_LOG_PAGES; x++) {
+		addr = (phys_addr_t)PMEM_LOG_ADDR + x * PAGE_SIZE;
+		pages[x] = pfn_to_page(addr >> PAGE_SHIFT);
+	} 
+	pmem_virt = vmap(pages, PMEM_LOG_PAGES, VM_MAP, prot);
+	kfree(pages);
+	if (!pmem_virt) return 0;  
+	
+	for (x = 0; x < PMEM_LOG_SIZE - PAGE_SIZE - 16; x += 4) {
+		__raw_writel_no_log(0, (uint32_t)pmem_virt + x);
+	}
+	
+	return 1;
+}
+
+int pmem_log_start(int act_log_cnt)
+{
+	uint32_t x;
+	if (!pmem_virt) return 0;
+	if (act_log_cnt < pmem_log_cnt) return 0;
+	pmem_log_beg = 1;
+	if (logged_chars < PMEM_LOG_SIZE - 100) {
+		for (x = 0; x < logged_chars; x++) {
+			__raw_writeb_no_log(log_buf[x], (uint32_t)pmem_virt + x);
+		}
+		__raw_writeb_no_log('\n', (uint32_t)pmem_virt + logged_chars);
+		pmem_log_size = logged_chars + 1;
+	}
+	return 1;
+}
+
+static void emit_log_char_pmem(char c)
+{
+	if (pmem_log_beg && pmem_virt && pmem_log_size < PMEM_LOG_SIZE-16) {
+		__raw_writeb_no_log(c, (uint32_t)pmem_virt + pmem_log_size);
+		pmem_log_size++;
+	}
+}
+
+

@@ -74,7 +74,7 @@ static void *emergency_dload_mode_addr;
 
 /* Download mode master kill-switch */
 static int dload_set(const char *val, struct kernel_param *kp);
-static int download_mode = 1;
+static int download_mode = 0;
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
 static int panic_prep_restart(struct notifier_block *this,
@@ -248,8 +248,29 @@ static irqreturn_t resout_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+
+static int panic_restart = 1;   // default ADB_REBOOT
+
+static int __init panic_restart_setup(char *str)
+{
+	get_option(&str, &panic_restart);
+	return 0;
+}
+early_param("panic_restart", panic_restart_setup);
+
+#define SOFTWARE_RESET          0x73727374  
+#define FASTBOOT_MODE           0x77665500    
+#define ADB_REBOOT              0x77665501  
+#define RECOVERY_MODE           0x77665502  
+#define UARTLOG_MODE            0x77665503  
+#define NORMAL_BOOT             0x77665504
+#define APANIC_REBOOT           0x77665505 
+
+
 static void msm_restart_prepare(const char *cmd)
 {
+	int rstmode;
+	
 #ifdef CONFIG_MSM_DLOAD_MODE
 
 	/* This looks like a normal reboot at this point. */
@@ -270,18 +291,26 @@ static void msm_restart_prepare(const char *cmd)
 	pm8xxx_reset_pwr_off(1);
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
-	if (get_dload_mode() || (cmd != NULL && cmd[0] != '\0'))
+	if (get_dload_mode() || (cmd != NULL && cmd[0] != '\0') || in_panic)
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
 	else
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_HARD_RESET);
 
+	if (panic_restart == 9)
+		panic_restart = 1000 + RECOVERY_MODE - FASTBOOT_MODE;   // RECOVERY_MODE
+
+	rstmode = ADB_REBOOT;
+	
+	if (in_panic == 1 || (panic_restart / 1000 == 1))
+		rstmode = FASTBOOT_MODE + (panic_restart % 1000);
+	
 	if (cmd != NULL) {
 		if (!strncmp(cmd, "bootloader", 10)) {
-			__raw_writel(0x77665500, restart_reason);
+			__raw_writel(FASTBOOT_MODE, restart_reason);
 		} else if (!strncmp(cmd, "recovery", 8)) {
-			__raw_writel(0x77665502, restart_reason);
+			__raw_writel(RECOVERY_MODE, restart_reason);
 		} else if (!strcmp(cmd, "rtc")) {
-			__raw_writel(0x77665503, restart_reason);
+			__raw_writel(UARTLOG_MODE, restart_reason);
 		} else if (!strncmp(cmd, "oem-", 4)) {
 			unsigned long code;
 			code = simple_strtoul(cmd + 4, NULL, 16) & 0xff;
@@ -289,8 +318,12 @@ static void msm_restart_prepare(const char *cmd)
 		} else if (!strncmp(cmd, "edl", 3)) {
 			enable_emergency_dload_mode();
 		} else {
-			__raw_writel(0x77665501, restart_reason);
+			__raw_writel(rstmode, restart_reason);
 		}
+	} else if (in_panic == 1) {
+		__raw_writel(rstmode, restart_reason);
+	} else {
+		__raw_writel(rstmode, restart_reason);
 	}
 
 	flush_cache_all();
@@ -300,6 +333,7 @@ static void msm_restart_prepare(const char *cmd)
 void msm_restart(char mode, const char *cmd)
 {
 	printk(KERN_NOTICE "Going down for restart now\n");
+	pmem_log_start(9);  // test!
 
 	msm_restart_prepare(cmd);
 

@@ -316,4 +316,11 @@ static inline void print_hex_dump_bytes(const char *prefix_str, int prefix_type,
 
 #endif
 
+int do_stop_num(int x);
+void set_stop_num(int num);
+int get_stop_num(void);
+
+int pmem_log_init(void);
+int pmem_log_start(int act_log_cnt);
+
 #endif
