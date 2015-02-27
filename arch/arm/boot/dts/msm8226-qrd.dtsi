@@ -18,9 +18,9 @@
 	};
 
 	i2c@f9927000 { /* BLSP1 QUP5 */
-		synaptics@20 {
+		synaptics@66 {
 			compatible = "synaptics,rmi4";
-			reg = <0x20>;
+			reg = <0x66>;
 			interrupt-parent = <&msmgpio>;
 			interrupts = <17 0x2008>;
 			vdd-supply = <&pm8226_l19>;
@@ -28,12 +28,11 @@
 			synaptics,reset-gpio = <&msmgpio 16 0x00>;
 			synaptics,irq-gpio = <&msmgpio 17 0x2008>;
 			synaptics,button-map = <139 102 158>;
-			synaptics,fw-image-name = "PR1468813.img";
 			synaptics,i2c-pull-up;
 			synaptics,power-down;
 			synaptics,disable-gpios;
 		};
-
+		/*
 		focaltech@38 {
 			compatible = "focaltech,5x06";
 			reg = <0x38>;
@@ -62,6 +61,7 @@
 			focaltech,fw-delay-readid-ms = <10>;
 			focaltech,fw-delay-era-flsh-ms = <2000>;
 		};
+		*/
 	};
 
 	gen-vkeys {
