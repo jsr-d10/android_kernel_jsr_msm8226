@@ -320,7 +320,10 @@
 		qcom,rpull-up-kohm = <100>;
 		qcom,vref-batt-therm = <1800000>;
 
-		/include/ "batterydata-qrd-4v35-2000mah.dtsi"
+		/include/ "batterydata-jsr-4v35-3000mah.dtsi"
+		/include/ "batterydata-jsr-4v35-6000mah.dtsi"
+		/include/ "batterydata-jsr-4v35-3000mah-ruilong.dtsi"
+		/include/ "batterydata-jsr-4v35-6000mah-ruilong.dtsi"
 	};
 };
 
