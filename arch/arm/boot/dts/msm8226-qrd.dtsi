@@ -399,11 +399,3 @@
 	qcom,mdss-pref-prim-intf = "dsi";
 	batfet-supply = <&pm8226_chg_batif>;
 };
-
-&mdss_dsi0 {
-	qcom,dsi-pref-prim-pan = <&dsi_nt35596_1080_vid>;
-};
-
-&dsi_nt35596_1080_vid {
-	qcom,cont-splash-enabled;
-};
