@@ -187,7 +187,7 @@
 	status = "ok";
 };
 
-&sdcc2 {
+&sdcc2 {  /* qcom,sdcc@f98a4000 */
 	vdd-supply = <&pm8226_l18>;
 	qcom,vdd-voltage-level = <2950000 2950000>;
 	qcom,vdd-current-level = <9000 400000>;
@@ -210,19 +210,17 @@
 
 	#address-cells = <0>;
 	interrupt-parent = <&sdcc2>;
-	interrupts = <0 1 2>;
+	interrupts = <0 1>;
 	#interrupt-cells = <1>;
 	interrupt-map-mask = <0xffffffff>;
 	interrupt-map = <0 &intc 0 125 0
-			1 &intc 0 220 0
-			2 &msmgpio 38 0x3>;
-	interrupt-names = "core_irq", "bam_irq", "status_irq";
-	cd-gpios = <&msmgpio 38 0x1>;
+			1 &intc 0 220 0>;
+	interrupt-names = "core_irq", "bam_irq";
 
 	status = "disabled";
 };
 
-&sdhc_2 {
+&sdhc_2 {  /* sdhci@f98a4900 */   /* SDC2 SD card slot */
 	vdd-supply = <&pm8226_l18>;
 	qcom,vdd-voltage-level = <2950000 2950000>;
 	qcom,vdd-current-level = <9000 400000>;
@@ -240,14 +238,12 @@
 
 	#address-cells = <0>;
 	interrupt-parent = <&sdhc_2>;
-	interrupts = <0 1 2>;
+	interrupts = <0 1>;
 	#interrupt-cells = <1>;
 	interrupt-map-mask = <0xffffffff>;
 	interrupt-map = <0 &intc 0 125 0
-			1 &intc 0 221 0
-			2 &msmgpio 38 0x3>;
-	interrupt-names = "hc_irq", "pwr_irq", "status_irq";
-	cd-gpios = <&msmgpio 38 0x1>;
+			1 &intc 0 221 0>;
+	interrupt-names = "hc_irq", "pwr_irq";
 
 	status = "ok";
 };
