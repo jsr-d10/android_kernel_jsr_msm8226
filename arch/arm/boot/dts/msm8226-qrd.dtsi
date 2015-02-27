@@ -306,7 +306,7 @@
 &pm8226_chg {
 	status = "okay";
 	qcom,battery-data = <&qrd_batterydata>;
-	qcom,tchg-mins = <240>;
+	qcom,tchg-mins = <500>;
 	qcom,ovp-monitor-en;
 };
 
