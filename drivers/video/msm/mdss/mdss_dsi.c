@@ -1204,6 +1204,10 @@ static int __devinit mdss_dsi_ctrl_probe(struct platform_device *pdev)
 		return -ENOTSUPP;
 	}
 
+#ifdef CONFIG_JSR_LCD_COMMON
+	get_lcd_panel_glass_type(&pdev->dev);
+#endif
+
 	ctrl_pdata = platform_get_drvdata(pdev);
 	if (!ctrl_pdata) {
 		ctrl_pdata = devm_kzalloc(&pdev->dev,

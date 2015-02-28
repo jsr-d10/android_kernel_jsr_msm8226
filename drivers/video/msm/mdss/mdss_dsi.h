@@ -21,6 +21,20 @@
 #include "mdss_io_util.h"
 #include "mdss_dsi_cmd.h"
 
+#ifdef CONFIG_JSR_LCD_COMMON
+#define GLASS_TYPE_AUO        0
+#define GLASS_TYPE_CMI        1
+#define GLASS_TYPE_AUO_ASI    2
+#define GLASS_TYPE_LG         3
+#define GLASS_TYPE_UNKNOWN    4
+
+#define GLASS_TYPE_OBJ_NAME   "glass_type"
+
+extern int glass_type;
+const char * get_panel_glass_name(void);
+int get_lcd_panel_glass_type(struct device * dev);
+#endif
+
 #define MMSS_SERDES_BASE_PHY 0x04f01000 /* mmss (De)Serializer CFG */
 
 #define MIPI_OUTP(addr, data) writel_relaxed((data), (addr))
