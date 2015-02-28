@@ -195,6 +195,10 @@ config LEDS_MSM_TRICOLOR
 	  To compile this driver as a module, choose M here: the
 	  module will be called leds-msm-tricolor.
 
+config JSR_LEDS_TRICOLOR_FLASHLIGHT
+	tristate "LED driver for BCT3253 3ch Current Sink RGB"
+	depends on LEDS_CLASS && MSM_SMD && I2C
+
 config LEDS_LP3944
 	tristate "LED Support for N.S. LP3944 (Fun Light) I2C chip"
 	depends on LEDS_CLASS
