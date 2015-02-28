@@ -4683,6 +4683,7 @@ qpnp_chg_load_battery_data(struct qpnp_chg_chip *chip)
 
 		batt_data.max_voltage_uv = -1;
 		batt_data.iterm_ua = -1;
+		pr_info("chan = %08x, batt_id = %i uV \n", result.chan, (int)result.physical);
 		rc = of_batterydata_read_data(node,
 				&batt_data, result.physical);
 		if (rc) {

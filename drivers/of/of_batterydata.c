@@ -302,6 +302,8 @@ int of_batterydata_read_data(struct device_node *batterydata_container_node,
 			}
 		}
 	}
+	pr_info("batt_id_kohm = %i , best_id_kohm = %i , name = \"%s\" \n", 
+		batt_id_kohm, best_id_kohm, best_node ? best_node->name : "");
 
 	if (best_node == NULL) {
 		pr_err("No battery data found\n");

@@ -3694,6 +3694,7 @@ static int set_battery_data(struct qpnp_bms_chip *chip)
 							battery_id);
 			return battery_id;
 		}
+		pr_info("batt_id = %i uV \n", (int)battery_id);
 
 		node = of_find_node_by_name(chip->spmi->dev.of_node,
 				"qcom,battery-data");
