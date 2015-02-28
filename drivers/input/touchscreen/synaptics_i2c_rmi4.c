@@ -18,6 +18,9 @@
  * GNU General Public License for more details.
  */
 
+/* #undef CONFIG_DYNAMIC_DEBUG */
+/* #define DEBUG */
+ 
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -522,6 +525,8 @@ static ssize_t synaptics_rmi4_f01_reset_store(struct device *dev,
 	if (reset != 1)
 		return -EINVAL;
 
+	dev_dbg(dev, "%s: call synaptics_rmi4_reset_device \n", __func__);
+	
 	retval = synaptics_rmi4_reset_device(rmi4_data);
 	if (retval < 0) {
 		dev_err(dev,
@@ -1598,6 +1603,9 @@ static int synaptics_rmi4_f11_init(struct synaptics_rmi4_data *rmi4_data,
 		fhandler->num_of_data_points = 10;
 
 	rmi4_data->num_of_fingers = fhandler->num_of_data_points;
+	dev_dbg(&rmi4_data->i2c_client->dev,
+			"%s: Function %02x num_of_data_points = %d \n",
+			__func__, fhandler->fn_number, fhandler->num_of_data_points);
 
 	retval = synaptics_rmi4_i2c_read(rmi4_data,
 			fhandler->full_addr.ctrl_base,
@@ -1607,15 +1615,42 @@ static int synaptics_rmi4_f11_init(struct synaptics_rmi4_data *rmi4_data,
 		return retval;
 
 	/* Maximum x and y */
+	/* max_x = 1100 , max_y = 1900 */
 	rmi4_data->sensor_max_x = ((control[6] & MASK_8BIT) << 0) |
 			((control[7] & MASK_4BIT) << 8);
 	rmi4_data->sensor_max_y = ((control[8] & MASK_8BIT) << 0) |
 			((control[9] & MASK_4BIT) << 8);
-	dev_dbg(&rmi4_data->i2c_client->dev,
+	dev_info(&rmi4_data->i2c_client->dev,
 			"%s: Function %02x max x = %d max y = %d\n",
 			__func__, fhandler->fn_number,
 			rmi4_data->sensor_max_x,
 			rmi4_data->sensor_max_y);
+
+#ifdef CONFIG_JSR_RMI4_VIRTUAL_KEY_SUPPORT
+/* 
+  file: sys/board_properties/virtualkeys.synaptics_rmi4_i2c
+  0x01:139:101:1343:120:96:0x01:102:360:1343:150:96:0x01:158:618:1343:120:96
+  |    key x   y    w   h  |    key x   y    w   h  |    key x   y    w   h
+	
+	file: /android_frameworks_base/services/input/InputReader.cpp
+	virtualKey.hitBottom = (virtualKeyDefinition.centerY + halfHeight) * touchScreenHeight / mSurfaceHeight + touchScreenTop;
+	
+	real values: sensor_max_x = 1100 , sensor_max_y = 1900
+	
+	touchScreenTop = 0                     // from stock (dumpsys input)
+	virtualKey.hitTop    = 1790            // from stock (dumpsys input)
+	virtualKey.hitBottom = 1923            // from stock (dumpsys input)
+	virtualKeyDefinition.centerY = 1343    // from stock file virtualkeys.synaptics_rmi4_i2c
+	halfHeight = 96/2 = 48                 // from stock file virtualkeys.synaptics_rmi4_i2c
+	mSurfaceHeight = 1280                  // display max y
+	
+	touchScreenHeight = 1923 * 1280 / (1343 + 96/2) = 1923 * 1280 / 1391 = 1769
+*/	
+	rmi4_data->sensor_max_y = (rmi4_data->sensor_max_y + 23) * 1280 / 1391;
+	dev_info(&rmi4_data->i2c_client->dev, "%s: JSR Fix: sensor max y = %d\n",
+			__func__, rmi4_data->sensor_max_y);
+	
+#endif	
 
 	rmi4_data->max_touch_width = MAX_F11_TOUCH_WIDTH;
 
@@ -1875,6 +1910,10 @@ static int synaptics_rmi4_f1a_alloc_mem(struct synaptics_rmi4_data *rmi4_data,
 	f1a->button_count = f1a->button_query.max_button_count + 1;
 	f1a->button_bitmask_size = (f1a->button_count + 7) / 8;
 
+	dev_dbg(&rmi4_data->i2c_client->dev,
+		"%s: button_count = %d  button_bitmask_size = %d \n",
+		__func__, f1a->button_count, f1a->button_bitmask_size);
+				
 	f1a->button_data_buffer = kcalloc(f1a->button_bitmask_size,
 			sizeof(*(f1a->button_data_buffer)), GFP_KERNEL);
 	if (!f1a->button_data_buffer) {
@@ -2994,6 +3033,8 @@ static int __devinit synaptics_rmi4_probe(struct i2c_client *client,
 					rmi4_data->input_dev->keybit);
 			input_set_capability(rmi4_data->input_dev,
 					EV_KEY, f1a->button_map[ii]);
+			dev_dbg(&rmi4_data->i2c_client->dev,
+				"%s: Add virt key = %d \n", __func__, f1a->button_map[ii]);
 		}
 	}
 

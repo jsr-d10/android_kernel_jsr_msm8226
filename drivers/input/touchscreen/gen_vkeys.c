@@ -10,6 +10,9 @@
  * GNU General Public License for more details.
  */
 
+#undef CONFIG_DYNAMIC_DEBUG
+#define DEBUG
+ 
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -122,8 +125,11 @@ static int __devinit vkey_parse_dt(struct device *dev,
 static int __devinit vkeys_probe(struct platform_device *pdev)
 {
 	struct vkeys_platform_data *pdata;
+	int ret = 0;
+#ifndef CONFIG_JSR_RMI4_VIRTUAL_KEY_SUPPORT
 	int width, height, center_x, center_y;
-	int x1 = 0, x2 = 0, i, c = 0, ret, border;
+	int x1 = 0, x2 = 0, i, c = 0, border;
+#endif
 	char *name;
 
 	vkey_buf = devm_kzalloc(&pdev->dev, MAX_BUF_SIZE, GFP_KERNEL);
@@ -148,6 +154,8 @@ static int __devinit vkeys_probe(struct platform_device *pdev)
 	} else
 		pdata = pdev->dev.platform_data;
 
+#ifndef CONFIG_JSR_RMI4_VIRTUAL_KEY_SUPPORT
+		
 	if (!pdata || !pdata->name || !pdata->keycodes || !pdata->num_keys ||
 		!pdata->disp_maxx || !pdata->disp_maxy || !pdata->panel_maxy) {
 		dev_err(&pdev->dev, "pdata is invalid\n");
@@ -174,6 +182,20 @@ static int __devinit vkeys_probe(struct platform_device *pdev)
 	}
 
 	vkey_buf[c] = '\0';
+	dev_info(&pdev->dev, "%s: vkey_buf = '%s'\n", __func__, vkey_buf);
+
+#else	
+	
+	pdata->name = "synaptics_rmi4_i2c";  // see file "synaptics_i2c_rmi4.c"
+/*	
+	file: sys/board_properties/virtualkeys.synaptics_rmi4_i2c
+  0x01:139:101:1343:120:96:0x01:102:360:1343:150:96:0x01:158:618:1343:120:96
+  |    key x   y    w   h  |    key x   y    w   h  |    key x   y    w   h
+*/	
+	strcpy(vkey_buf, "0x01:139:101:1343:120:96:0x01:102:360:1343:150:96:0x01:158:618:1343:120:96");
+	dev_info(&pdev->dev, "%s: vkey_buf = '%s'\n", __func__, vkey_buf);
+	
+#endif
 
 	name = devm_kzalloc(&pdev->dev, sizeof(*name) * MAX_BUF_SIZE,
 					GFP_KERNEL);
@@ -195,6 +217,7 @@ static int __devinit vkeys_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed to create attributes\n");
 		goto destroy_kobj;
 	}
+	dev_info(&pdev->dev, "%s: create vkey_grp '%s'\n", __func__, name);
 	return 0;
 
 destroy_kobj:

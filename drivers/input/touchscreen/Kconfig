@@ -1032,4 +1032,8 @@ config TOUCHSCREEN_GT9XX
 
 source "drivers/input/touchscreen/gt9xx/Kconfig"
 
+config JSR_RMI4_VIRTUAL_KEY_SUPPORT
+	bool "Synaptics RMI4 touchscreen virtual keys"
+	depends on I2C
+
 endif
