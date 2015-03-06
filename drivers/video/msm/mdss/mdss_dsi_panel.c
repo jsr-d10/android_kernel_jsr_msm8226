@@ -64,6 +64,72 @@ static struct attribute_group glasstype_grp = {
 
 DEFINE_LED_TRIGGER(bl_led_trigger);
 
+#ifdef CONFIG_JSR_WORKAROUND_KTD3102_ISSUE
+
+#define BL_OFF       0
+#define BL_ON        1
+
+static DEFINE_MUTEX(ktd_bklt_lock);
+static int ktd_bklt_status = BL_ON;
+static int ktd_bklt_level = 0;
+
+static inline int gpio_is_requested(unsigned gpio)
+{
+	struct gpio_chip * chip;
+	if (!gpio_is_valid(gpio))
+		return -EINVAL;
+	chip = gpio_to_chip(gpio);
+	if (!gpiochip_is_requested(chip, gpio - chip->base))
+		return -ENODEV;
+	return 0;
+}
+
+static int ktd3102_backlight_set_level(struct mdss_dsi_ctrl_pdata *ctrl, int level)
+{
+	int err = gpio_is_requested(ctrl->disp_en_gpio);
+	if (err) {
+		pr_err("%s: disp_en line not configured (gpio = %d, level = %d, err = %i) \n", 
+			__func__, ctrl->disp_en_gpio, level, err);
+		return err;
+	}
+	mutex_lock(&ktd_bklt_lock);
+	if (level) {
+		if (ktd_bklt_level == 0) {
+			msleep(30);
+			gpio_set_value((ctrl->disp_en_gpio), 1);
+		}
+	} else {
+		if (ktd_bklt_status == BL_ON) {
+			ktd_bklt_status = BL_OFF;
+		} else {
+			msleep(180);
+			gpio_set_value((ctrl->disp_en_gpio), 0);
+		}
+	}
+	ktd_bklt_level = level;
+	mutex_unlock(&ktd_bklt_lock);
+	return 0;
+}
+
+static int ktd3102_backlight_off(struct mdss_dsi_ctrl_pdata *ctrl)
+{
+	int err = gpio_is_requested(ctrl->rst_gpio);
+	if (err) {
+		pr_err("%s: rst_gpio not configured (gpio = %d, err = %i) \n", 
+			__func__, ctrl->rst_gpio, err);
+		return err;
+	}
+	gpio_set_value((ctrl->rst_gpio), 0);
+	mdelay(10);
+	gpio_set_value((ctrl->rst_gpio), 1);
+	mdelay(50);
+	gpio_set_value((ctrl->rst_gpio), 0);
+	mdelay(10);
+	return 0;
+}
+
+#endif
+
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
 {
 	ctrl->pwm_bl = pwm_request(ctrl->pwm_lpg_chan, "lcd-bklt");
@@ -438,6 +504,9 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 			}
 			mdss_dsi_panel_bklt_dcs(sctrl, bl_level);
 		}
+#ifdef CONFIG_JSR_WORKAROUND_KTD3102_ISSUE
+		ktd3102_backlight_set_level(ctrl_pdata, bl_level);
+#endif
 		break;
 	default:
 		pr_err("%s: Unknown bl_ctrl configuration\n",
@@ -488,6 +557,10 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 
 	if (ctrl->off_cmds.cmd_cnt)
 		mdss_dsi_panel_cmds_send(ctrl, &ctrl->off_cmds);
+
+#ifdef CONFIG_JSR_WORKAROUND_KTD3102_ISSUE
+	ktd3102_backlight_off(ctrl);
+#endif
 
 	pr_debug("%s:-\n", __func__);
 	return 0;

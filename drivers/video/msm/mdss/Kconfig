@@ -39,3 +39,8 @@ config FB_MSM_MDSS_MDP3
 config JSR_LCD_COMMON
 	bool "JSR LCD common"
 	default n
+
+config JSR_WORKAROUND_KTD3102_ISSUE
+	bool "JSR LCD backlight brightness control"
+	default n
+  
