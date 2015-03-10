@@ -910,6 +910,13 @@ static void msm_isp_process_done_buf(struct vfe_device *vfe_dev,
 	uint32_t stream_idx = HANDLE_TO_IDX(stream_info->stream_handle);
 	uint32_t src_intf = SRC_TO_INTF(stream_info->stream_src);
 	uint32_t frame_id = 0;
+	memset(&buf_event, 0, sizeof(buf_event) );
+
+	if(stream_idx >= MAX_NUM_STREAM) {
+		pr_err("%s: Invalid stream_idx \n", __func__);
+		return;
+	}
+
 	if (src_intf < VFE_SRC_MAX) {
 		frame_id = vfe_dev->axi_data.src_info[src_intf].frame_id;
 	}
@@ -1057,7 +1064,7 @@ static void msm_isp_update_rdi_output_count(
 
 	for (i = 0; i < stream_cfg_cmd->num_streams; i++) {
 		if (HANDLE_TO_IDX(stream_cfg_cmd->stream_handle[i])
-		> MAX_NUM_STREAM) {
+		>= MAX_NUM_STREAM) {
 			return;
 		}
 		stream_info =
