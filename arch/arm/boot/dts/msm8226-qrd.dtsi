@@ -427,6 +427,61 @@
 };
 
 &pm8226_vadc {
+	chan@0 {
+		label = "usb_in";
+		reg = <0x0>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <4>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@2 {
+		label = "vchg_sns";
+		reg = <0x2>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <3>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@5 {
+		label = "vcoin";
+		reg = <0x5>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <1>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@6 {
+		label = "vbat_sns";
+		reg = <0x6>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <1>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@7 {
+		label = "vph_pwr";
+		reg = <0x7>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <1>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
 	chan@30 {
 		label = "batt_therm";
 		reg = <0x30>;
@@ -437,6 +492,40 @@
 		qcom,hw-settle-time = <2>;
 		qcom,fast-avg-setup = <0>;
 	};
+
+	chan@31 {
+		label = "batt_id";
+		reg = <0x31>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <2>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@b2 {
+		label = "xo_therm_pu2";
+		reg = <0xb2>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <4>;
+		qcom,hw-settle-time = <2>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@39 {
+		label = "usb_id_nopull";
+		reg = <0x39>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <2>;
+		qcom,fast-avg-setup = <0>;
+	};  
+	
 };
 
 &android_usb {
