@@ -1943,8 +1943,8 @@ early_param("pmemlog", pmem_log_cnt_setup);
 
 
 #define PMEM_LOG_ADDR   (0x7f200000)
-#define PMEM_LOG_PAGES  70
-#define PMEM_LOG_SIZE   (PAGE_SIZE * PMEM_LOG_PAGES)
+#define PMEM_LOG_SIZE   (0x00100000)
+#define PMEM_LOG_PAGES  (PMEM_LOG_SIZE / PAGE_SIZE)
 
 int pmem_log_init(void)
 {
@@ -1967,7 +1967,7 @@ int pmem_log_init(void)
 	kfree(pages);
 	if (!pmem_virt) return 0;  
 	
-	for (x = 0; x < PMEM_LOG_SIZE - PAGE_SIZE - 16; x += 4) {
+	for (x = 0; x < PMEM_LOG_SIZE - 8; x += 4) {
 		__raw_writel_no_log(0, (uint32_t)pmem_virt + x);
 	}
 	
