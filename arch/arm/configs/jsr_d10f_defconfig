@@ -2742,6 +2742,7 @@ CONFIG_USB_EHCI_MSM_HSIC=y
 # USB Device Class drivers
 #
 CONFIG_USB_ACM=y
+CONFIG_USB_CCID_BRIDGE=y
 # CONFIG_USB_PRINTER is not set
 # CONFIG_USB_WDM is not set
 # CONFIG_USB_TMC is not set
