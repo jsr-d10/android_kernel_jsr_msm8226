@@ -1121,18 +1121,23 @@ static void hdd_PowerStateChangedCB
    tPmcState newState
 )
 {
+   v_BOOL_t hddsusp;
+   
    hdd_context_t *pHddCtx = callbackContext;
+   
+   spin_lock(&pHddCtx->filter_lock);
+   hddsusp = pHddCtx->hdd_wlan_suspended;
    /* if the driver was not in BMPS during early suspend,
     * the dynamic DTIM is now updated at Riva */
-   if ((newState == BMPS) && pHddCtx->hdd_wlan_suspended
+   if ((newState == BMPS) && hddsusp
            && pHddCtx->cfg_ini->enableDynamicDTIM
            && (pHddCtx->hdd_ignore_dtim_enabled == FALSE))
    {
        pHddCtx->hdd_ignore_dtim_enabled = TRUE;
    }
-   spin_lock(&pHddCtx->filter_lock);
-   if((newState == BMPS) &&  pHddCtx->hdd_wlan_suspended) {
-      spin_unlock(&pHddCtx->filter_lock);
+   spin_unlock(&pHddCtx->filter_lock);
+   
+   if((newState == BMPS) && hddsusp) {
       if (VOS_FALSE == pHddCtx->sus_res_mcastbcast_filter_valid) {
           pHddCtx->sus_res_mcastbcast_filter =
               pHddCtx->configuredMcastBcastFilter;
@@ -1161,14 +1166,13 @@ static void hdd_PowerStateChangedCB
        */
       if (IMPS != newState)
       {
-           if (FALSE == pHddCtx->hdd_wlan_suspended)
+           if (FALSE == hddsusp)
            {
                 hddLog(VOS_TRACE_LEVEL_INFO,
                           "Not in IMPS/BMPS and suspended state");
                 hdd_conf_mcastbcast_filter(pHddCtx, FALSE);
            }
       }
-      spin_unlock(&pHddCtx->filter_lock);
    }
 }
 
