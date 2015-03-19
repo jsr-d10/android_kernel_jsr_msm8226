@@ -1709,11 +1709,13 @@ void extract_cal_data(int len)
 	struct cal_data_params calhdr;
 	unsigned char fw_status = WCNSS_RESP_FAIL;
 
+	pr_err("%s: Enter \n", __func__);
 	if (len < sizeof(struct cal_data_params)) {
 		pr_err("wcnss: incomplete cal header length\n");
 		return;
 	}
 
+	pr_err("%s: 010 \n", __func__);
 	rc = smd_read(penv->smd_ch, (unsigned char *)&calhdr,
 			sizeof(struct cal_data_params));
 	if (rc < sizeof(struct cal_data_params)) {
@@ -1721,20 +1723,24 @@ void extract_cal_data(int len)
 		return;
 	}
 
+	pr_err("%s: 020 \n", __func__);
 	if (penv->fw_cal_exp_frag != calhdr.frag_number) {
 		pr_err("wcnss: Invalid frgament");
 		goto exit;
 	}
 
+	pr_err("%s: 030 \n", __func__);
 	if (calhdr.frag_size > WCNSS_MAX_FRAME_SIZE) {
 		pr_err("wcnss: Invalid fragment size");
 		goto exit;
 	}
 
+	pr_err("%s: 040 \n", __func__);
 	if (penv->fw_cal_available) {
 		/* ignore cal upload from SSR */
 		smd_read(penv->smd_ch, NULL, calhdr.frag_size);
 		penv->fw_cal_exp_frag++;
+		pr_err("%s: 045 \n", __func__);
 		if (calhdr.msg_flags & LAST_FRAGMENT) {
 			penv->fw_cal_exp_frag = 0;
 			goto exit;
@@ -1742,22 +1748,26 @@ void extract_cal_data(int len)
 		return;
 	}
 
+	pr_err("%s: 050 \n", __func__);
 	if (0 == calhdr.frag_number) {
 		if (calhdr.total_size > MAX_CALIBRATED_DATA_SIZE) {
 			pr_err("wcnss: Invalid cal data size %d",
 				calhdr.total_size);
 			goto exit;
 		}
+		pr_err("%s: 055 \n", __func__);
 		kfree(penv->fw_cal_data);
 		penv->fw_cal_rcvd = 0;
 		penv->fw_cal_data = kmalloc(calhdr.total_size,
 				GFP_KERNEL);
+		pr_err("%s: 057 \n", __func__);
 		if (penv->fw_cal_data == NULL) {
 			smd_read(penv->smd_ch, NULL, calhdr.frag_size);
 			goto exit;
 		}
 	}
 
+	pr_err("%s: 060 \n", __func__);
 	mutex_lock(&penv->dev_lock);
 	if (penv->fw_cal_rcvd + calhdr.frag_size >
 			MAX_CALIBRATED_DATA_SIZE) {
@@ -1765,19 +1775,23 @@ void extract_cal_data(int len)
 				penv->fw_cal_rcvd + calhdr.frag_size);
 		penv->fw_cal_exp_frag = 0;
 		penv->fw_cal_rcvd = 0;
+		pr_err("%s: 065 \n", __func__);
 		smd_read(penv->smd_ch, NULL, calhdr.frag_size);
 		goto unlock_exit;
 	}
 
+	pr_err("%s: 070 \n", __func__);
 	rc = smd_read(penv->smd_ch, penv->fw_cal_data + penv->fw_cal_rcvd,
 			calhdr.frag_size);
 	if (rc < calhdr.frag_size)
 		goto unlock_exit;
 
+	pr_err("%s: 080 \n", __func__);
 	penv->fw_cal_exp_frag++;
 	penv->fw_cal_rcvd += calhdr.frag_size;
 
 	if (calhdr.msg_flags & LAST_FRAGMENT) {
+		pr_err("%s: 085 \n", __func__);
 		penv->fw_cal_exp_frag = 0;
 		penv->fw_cal_available = true;
 		pr_info("wcnss: cal data collection completed\n");
@@ -1785,16 +1799,21 @@ void extract_cal_data(int len)
 	mutex_unlock(&penv->dev_lock);
 	wake_up(&penv->read_wait);
 
+	pr_err("%s: 090 \n", __func__);
 	if (penv->fw_cal_available) {
 		fw_status = WCNSS_RESP_SUCCESS;
 		wcnss_send_cal_rsp(fw_status);
+		pr_err("%s: 095 \n", __func__);
 	}
+	pr_err("%s: Exit 1 \n", __func__);
 	return;
 
 unlock_exit:
+	pr_err("%s: Exit 2 \n", __func__);
 	mutex_unlock(&penv->dev_lock);
 
 exit:
+	pr_err("%s: Exit 3 \n", __func__);
 	wcnss_send_cal_rsp(fw_status);
 	return;
 }
@@ -1812,6 +1831,7 @@ static void wcnssctrl_rx_handler(struct work_struct *worker)
 	int hw_type;
 	unsigned char fw_status = 0;
 
+	pr_err("wcnss: wcnssctrl_rx_handler: Enter \n");
 	len = smd_read_avail(penv->smd_ch);
 	if (len > WCNSS_MAX_FRAME_SIZE) {
 		pr_err("wcnss: frame larger than the allowed size\n");
@@ -1831,7 +1851,7 @@ static void wcnssctrl_rx_handler(struct work_struct *worker)
 	len -= sizeof(struct smd_msg_hdr);
 
 	phdr = (struct smd_msg_hdr *)buf;
-
+	pr_err("wcnss: wcnssctrl_rx_handler: msg_type = %d \n", phdr->msg_type);
 	switch (phdr->msg_type) {
 
 	case WCNSS_VERSION_RSP:
@@ -1923,6 +1943,7 @@ static void wcnssctrl_rx_handler(struct work_struct *worker)
 	default:
 		pr_err("wcnss: invalid message type %d\n", phdr->msg_type);
 	}
+	pr_err("wcnss: wcnssctrl_rx_handler: Exit \n");
 	return;
 }
 
