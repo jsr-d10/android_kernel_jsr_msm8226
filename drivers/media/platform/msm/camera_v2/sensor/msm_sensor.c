@@ -28,6 +28,30 @@
 #define CDBG(fmt, args...) do { } while (0)
 #endif
 
+#ifdef CONFIG_JSR_CAMERA_VENDOR
+int camera_rear_id = 0;
+int camera_front_id = 0;
+
+const char * get_camera_model_by_id(int camid)
+{
+	switch (camid) {
+	case CAMERA_VENDOR_T4K37AB:
+		return "Toshiba_Qtech_t4k37ab\n";
+	case CAMERA_VENDOR_IMX135:
+		return "Sony_Liteon_imx135\n";
+	case CAMERA_VENDOR_OV13850:
+		return "OmniVision_Truly_ov13850\n";
+	case CAMERA_VENDOR_OV5648:
+		return "OmniVision_Truly_ov5648\n";
+	case CAMERA_VENDOR_OV2720:
+		return "OmniVision_Truly_ov2720\n";
+	case CAMERA_VENDOR_TCM9516:
+		return "Toshiba_TCM9516\n";
+	}
+	return "Unknown camera model\n";
+}
+#endif
+
 static int32_t msm_camera_get_power_settimgs_from_sensor_lib(
 	struct msm_camera_power_ctrl_t *power_info,
 	struct msm_sensor_power_setting_array *power_setting_array)
@@ -462,6 +486,11 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 
 int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 {
+#ifdef CONFIG_JSR_CAMERA_VENDOR
+	int camid = CAMERA_VENDOR_UNKNOWN;
+	const char * cam_name;
+#endif
+	int32_t index = 0;
 	int rc = 0;
 	uint16_t chipid = 0;
 	struct msm_camera_i2c_client *sensor_i2c_client;
@@ -494,6 +523,34 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 
 	CDBG("%s: read id: %x expected id %x:\n", __func__, chipid,
 		slave_info->sensor_id);
+
+#ifdef CONFIG_JSR_CAMERA_VENDOR
+	switch (chipid) {
+	case 0x1C21:
+		camid = camera_rear_id = CAMERA_VENDOR_T4K37AB;
+		break;
+	case 0x0135:
+		camid = camera_rear_id = CAMERA_VENDOR_IMX135;
+		break;
+	case 0xD850:
+		camid = camera_rear_id = CAMERA_VENDOR_OV13850;
+		break;
+	case 0x5648:
+		camid = camera_front_id = CAMERA_VENDOR_OV5648;
+		break;
+	case 0x2720:
+		camid = camera_front_id = CAMERA_VENDOR_OV2720;
+		break;
+	case 0x1000:
+		camid = camera_front_id = CAMERA_VENDOR_TCM9516;
+		break;
+	}
+
+	cam_name = get_camera_model_by_id(camid);
+	pr_info("%s: chip id = %x (exp id = %x) name = %s \n", __func__,
+		chipid, slave_info->sensor_id, cam_name);
+#endif
+
 	if (chipid != slave_info->sensor_id) {
 		pr_err("msm_sensor_match_id chip id doesnot match\n");
 		return -ENODEV;
