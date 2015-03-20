@@ -15,7 +15,6 @@
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/module.h>
-#include <linux/ratelimit.h>
 #include <linux/irqreturn.h>
 #include <mach/vreg.h>
 #include "msm_csiphy.h"
@@ -178,7 +177,6 @@ static struct msm_cam_clk_info csiphy_8960_clk_info[] = {
 static struct msm_cam_clk_info csiphy_8610_clk_info[] = {
 	{"csiphy_timer_src_clk", 200000000},
 	{"csiphy_timer_clk", -1},
-	{"csi_ahb_clk", -1},
 };
 
 static struct msm_cam_clk_info csiphy_8974_clk_info[] = {
@@ -600,7 +598,7 @@ static long msm_csiphy_cmd(struct csiphy_device *csiphy_dev, void *arg)
 		rc = msm_csiphy_release(csiphy_dev, &csi_lane_params);
 		break;
 	default:
-		pr_err_ratelimited("%s: %d failed\n", __func__, __LINE__);
+		pr_err("%s: %d failed\n", __func__, __LINE__);
 		rc = -ENOIOCTLCMD;
 		break;
 	}
