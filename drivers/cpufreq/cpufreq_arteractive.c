@@ -24,6 +24,8 @@
  *                 Predefine some governor tunables
  *           1.1 - Predefine more governor tunables taken from stock klte firmware's init.qcom.post_boot.sh
  *           1.2 - Apply Samsung changes from SM-G900F_EUR_LL_Opensource.zip
+ *           1.3 - Apply upstream patches from https://github.com/android/kernel_common (branch android-3.4)
+ *                 (subsystem: CPU FREQUENCY DRIVERS- Set cpu_load calculation on current frequency)
  *
  */
 
@@ -702,7 +704,7 @@ static void cpufreq_interactive_timer(unsigned long data)
 	spin_lock_irqsave(&pcpu->target_freq_lock, flags);
 	do_div(cputime_speedadj, delta_time);
 	loadadjfreq = (unsigned int)cputime_speedadj * 100;
-	cpu_load = loadadjfreq / pcpu->target_freq;
+	cpu_load = loadadjfreq / pcpu->policy->cur;
 	pcpu->prev_load = cpu_load;
 	boosted = boost_val || now < boostpulse_endtime;
 
