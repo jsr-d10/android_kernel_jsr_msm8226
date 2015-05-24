@@ -26,6 +26,9 @@
  *           1.2 - Apply Samsung changes from SM-G900F_EUR_LL_Opensource.zip
  *           1.3 - Apply upstream patches from https://github.com/android/kernel_common (branch android-3.4)
  *                 (subsystem: CPU FREQUENCY DRIVERS- Set cpu_load calculation on current frequency)
+ *           2.0 - Apply different go_hispeed_load when screen is off
+ *                 (depends on powersuspend)
+ *                 (inspired by https://github.com/CyanogenMod/android_device_lge_hammerhead/commit/e18d9f262ddad4d142be1fb14dd48cdc01e64dee )
  *
  */
 
@@ -43,6 +46,7 @@
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/kernel_stat.h>
+#include <linux/powersuspend.h>
 #include <asm/cputime.h>
 
 #define CONFIG_MODE_AUTO_CHANGE
@@ -92,6 +96,9 @@ struct cpufreq_interactive_cpuinfo {
 
 static DEFINE_PER_CPU(struct cpufreq_interactive_cpuinfo, cpuinfo);
 
+/* boolean for determining screen on/off state */
+static bool suspended = false;
+
 /* realtime thread handles frequency scaling */
 static struct task_struct *speedchange_task;
 static cpumask_t speedchange_cpumask;
@@ -104,6 +111,9 @@ static unsigned int hispeed_freq = 1190400;
 /* Go to hi speed when CPU load at or above this value. */
 #define DEFAULT_GO_HISPEED_LOAD 99
 static unsigned long go_hispeed_load = DEFAULT_GO_HISPEED_LOAD;
+
+/* Go to hi speed when CPU load at or above this value on screen-off state */
+#define DEFAULT_GO_HISPEED_LOAD_SCREEN_OFF 110
 
 /* Sampling down factor to be applied to min_sample_time at max freq */
 static unsigned int sampling_down_factor = 100000;
@@ -712,7 +722,9 @@ static void cpufreq_interactive_timer(unsigned long data)
 	pcpu->policy->util = cpu_load;
 #endif
 
-	if (cpu_load >= go_hispeed_load || boosted) {
+	if ( (suspended && (cpu_load >= DEFAULT_GO_HISPEED_LOAD_SCREEN_OFF)) ||
+	    (!suspended && (cpu_load >= go_hispeed_load)) ||
+	     (boosted)) {
 		if (pcpu->target_freq < hispeed_freq) {
 			new_freq = hispeed_freq;
 		} else {
@@ -1981,6 +1993,24 @@ static void cpufreq_interactive_nop_timer(unsigned long data)
 {
 }
 
+static void arteractive_early_suspend(struct power_suspend *handler)
+{
+	suspended = true;
+	return;
+}
+
+static void arteractive_late_resume(struct power_suspend *handler)
+{
+	suspended = false;
+	return;
+}
+
+static struct power_suspend arteractive_suspend = {
+	.suspend = arteractive_early_suspend,
+	.resume = arteractive_late_resume,
+};
+
+
 static int __init cpufreq_arteractive_init(void)
 {
 #if TOUCHBOOST
@@ -2007,6 +2037,8 @@ static int __init cpufreq_arteractive_init(void)
 			rc = input_register_handler(&interactive_input_handler);
 #endif
 	}
+
+	register_power_suspend(&arteractive_suspend);
 
 	spin_lock_init(&target_loads_lock);
 	spin_lock_init(&speedchange_cpumask_lock);
