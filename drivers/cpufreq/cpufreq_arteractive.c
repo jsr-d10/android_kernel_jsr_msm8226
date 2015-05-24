@@ -29,6 +29,11 @@
  *           2.0 - Apply different go_hispeed_load when screen is off
  *                 (depends on powersuspend)
  *                 (inspired by https://github.com/CyanogenMod/android_device_lge_hammerhead/commit/e18d9f262ddad4d142be1fb14dd48cdc01e64dee )
+ *                 Apply hispeed boost only on cpu0.
+ *                     Boost in interactive is intended to ramp up the frequency on sudden workload burst,
+ *                     and since most *sudden workload* is single-threaded, boosting up exclusively on cpu0 is quite enough.
+ *                     Rest of the cores can slowly ramp up and match the actual workload.
+ *                     This is not recommended on devices where reducing latency is very important.
  *
  */
 
@@ -725,14 +730,21 @@ static void cpufreq_interactive_timer(unsigned long data)
 	if ( (suspended && (cpu_load >= DEFAULT_GO_HISPEED_LOAD_SCREEN_OFF)) ||
 	    (!suspended && (cpu_load >= go_hispeed_load)) ||
 	     (boosted)) {
-		if (pcpu->target_freq < hispeed_freq) {
-			new_freq = hispeed_freq;
-		} else {
-			new_freq = choose_freq(pcpu, loadadjfreq);
-
-			if (new_freq < hispeed_freq)
+		if (pcpu->policy->cpu == 0) {
+			if (pcpu->target_freq < hispeed_freq) {
 				new_freq = hispeed_freq;
+			} else {
+				new_freq = choose_freq(pcpu, loadadjfreq);
+
+				if (new_freq < hispeed_freq)
+					new_freq = hispeed_freq;
+			}
 		}
+#if 0 /* for debugging purpose */
+		  else {
+			pr_info("%s: not boosting up cpu%d\n", __func__, pcpu->policy->cpu);
+		}
+#endif
 	} else {
 		new_freq = choose_freq(pcpu, loadadjfreq);
 
