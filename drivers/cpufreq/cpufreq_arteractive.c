@@ -34,6 +34,7 @@
  *                     and since most *sudden workload* is single-threaded, boosting up exclusively on cpu0 is quite enough.
  *                     Rest of the cores can slowly ramp up and match the actual workload.
  *                     This is not recommended on devices where reducing latency is very important.
+ *                 Apply some several CAF(3.4 & 3.10) and Chromium(3.14) commits.
  *
  */
 
