@@ -95,7 +95,7 @@ static void msm_cci_set_clk_param(struct cci_device *cci_dev)
 static void msm_cci_flush_queue(struct cci_device *cci_dev,
 	enum cci_i2c_master_t master)
 {
-	uint32_t rc = 0;
+	int32_t rc = 0;
 
 	msm_camera_io_w(1 << master, cci_dev->base + CCI_HALT_REQ_ADDR);
 	rc = wait_for_completion_interruptible_timeout(
@@ -181,7 +181,7 @@ static int32_t msm_cci_data_queue(struct cci_device *cci_dev,
 	uint16_t i = 0, j = 0, k = 0, h = 0, len = 0;
 	int32_t rc = 0;
 	uint32_t cmd = 0, delay = 0;
-	uint8_t data[10];
+	uint8_t data[11];
 	uint16_t reg_addr = 0;
 	struct msm_camera_i2c_reg_setting *i2c_msg =
 		&c_ctrl->cfg.cci_i2c_write_cfg;
@@ -479,7 +479,8 @@ static int32_t msm_cci_i2c_read_bytes(struct v4l2_subdev *sd,
 		return -EINVAL;
 	}
 
-	if (c_ctrl->cci_info->cci_i2c_master > MASTER_MAX) {
+	if (c_ctrl->cci_info->cci_i2c_master > MASTER_MAX
+			|| c_ctrl->cci_info->cci_i2c_master < 0) {
 		pr_err("%s:%d Invalid I2C master addr\n", __func__, __LINE__);
 		return -EINVAL;
 	}
@@ -524,7 +525,8 @@ static int32_t msm_cci_i2c_write(struct v4l2_subdev *sd,
 	enum cci_i2c_master_t master;
 	enum cci_i2c_queue_t queue = QUEUE_0;
 	cci_dev = v4l2_get_subdevdata(sd);
-	if (c_ctrl->cci_info->cci_i2c_master > MASTER_MAX) {
+	if (c_ctrl->cci_info->cci_i2c_master > MASTER_MAX
+			|| c_ctrl->cci_info->cci_i2c_master < 0) {
 		pr_err("%s:%d Invalid I2C master addr\n", __func__, __LINE__);
 		return -EINVAL;
 	}
@@ -616,7 +618,7 @@ static int32_t msm_cci_i2c_write(struct v4l2_subdev *sd,
 		msm_cci_flush_queue(cci_dev, master);
 		goto ERROR;
 	} else {
-		rc = 0;
+		rc = cci_dev->cci_master_info[master].status;
 	}
 	CDBG("%s:%d X wait_for_completion_interruptible\n", __func__,
 		__LINE__);
@@ -629,7 +631,11 @@ ERROR:
 static int msm_cci_subdev_g_chip_ident(struct v4l2_subdev *sd,
 			struct v4l2_dbg_chip_ident *chip)
 {
-	BUG_ON(!chip);
+	if (!chip) {
+		pr_err("%s:%d: NULL pointer supplied for chip ident\n",
+			 __func__, __LINE__);
+		return -EINVAL;
+	}
 	chip->ident = V4L2_IDENT_CCI;
 	chip->revision = 0;
 	return 0;
@@ -645,7 +651,7 @@ static struct msm_cam_clk_info cci_clk_info[] = {
 static int32_t msm_cci_init(struct v4l2_subdev *sd,
 	struct msm_camera_cci_ctrl *c_ctrl)
 {
-	int rc = 0;
+	int32_t rc = 0;
 	struct cci_device *cci_dev;
 	enum cci_i2c_master_t master;
 	cci_dev = v4l2_get_subdevdata(sd);
@@ -661,7 +667,7 @@ static int32_t msm_cci_init(struct v4l2_subdev *sd,
 		CDBG("%s ref_count %d\n", __func__, cci_dev->ref_count);
 		master = c_ctrl->cci_info->cci_i2c_master;
 		CDBG("%s:%d master %d\n", __func__, __LINE__, master);
-		if (master < MASTER_MAX) {
+		if (master < MASTER_MAX && master >= 0) {
 			mutex_lock(&cci_dev->cci_master_info[master].mutex);
 			/* Set reset pending flag to TRUE */
 			cci_dev->cci_master_info[master].reset_pending = TRUE;

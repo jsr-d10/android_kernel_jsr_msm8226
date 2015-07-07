@@ -283,13 +283,13 @@ static int32_t msm_sensor_get_dt_vreg_data(struct device_node *of_node,
 	struct msm_camera_sensor_board_info *sensordata)
 {
 	int32_t rc = 0, i = 0;
-	uint32_t count = 0;
+	int32_t count = 0;
 	uint32_t *vreg_array = NULL;
 
 	count = of_property_count_strings(of_node, "qcom,cam-vreg-name");
 	CDBG("%s qcom,cam-vreg-name count %d\n", __func__, count);
 
-	if (!count)
+	if (count <= 0)
 		return 0;
 
 	sensordata->cam_vreg = kzalloc(sizeof(struct camera_vreg_t) * count,
@@ -991,6 +991,7 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	struct msm_sensor_power_setting_array *power_setting_array = NULL;
 	struct msm_sensor_power_setting *power_setting = NULL;
 	struct msm_camera_sensor_board_info *data = s_ctrl->sensordata;
+	uint32_t retry = 0;
 	s_ctrl->stop_setting_valid = 0;
 
 	CDBG("%s:%d\n", __func__, __LINE__);
@@ -1092,13 +1093,22 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 		}
 	}
 
+	for (retry = 0; retry < 3; retry++)
+	{
 	if (s_ctrl->func_tbl->sensor_match_id)
 		rc = s_ctrl->func_tbl->sensor_match_id(s_ctrl);
 	else
 		rc = msm_sensor_match_id(s_ctrl);
 	if (rc < 0) {
+			if (retry < 2) {
+				continue;
+			} else {
 		pr_err("%s:%d match id failed rc %d\n", __func__, __LINE__, rc);
 		goto power_up_failed;
+	}
+		} else {
+			break;
+		}
 	}
 
 	CDBG("%s exit\n", __func__);

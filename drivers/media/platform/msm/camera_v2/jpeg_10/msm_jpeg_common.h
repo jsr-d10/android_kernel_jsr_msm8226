@@ -20,7 +20,7 @@
 #endif
 
 #define JPEG_PR_ERR   pr_err
-#define JPEG_DBG_HIGH   pr_err
+#define JPEG_DBG_HIGH   pr_debug
 
 enum JPEG_MODE {
 	JPEG_MODE_DISABLE,

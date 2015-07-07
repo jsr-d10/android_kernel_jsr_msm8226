@@ -68,9 +68,17 @@ int msm_isp_validate_axi_request(struct msm_vfe_axi_shared_data *axi_data,
 	struct msm_vfe_axi_stream_request_cmd *stream_cfg_cmd)
 {
 	int rc = -1, i;
-	struct msm_vfe_axi_stream *stream_info =
-		&axi_data->stream_info[
-			HANDLE_TO_IDX(stream_cfg_cmd->axi_stream_handle)];
+	struct msm_vfe_axi_stream *stream_info = NULL;
+	uint32_t idx = 0;
+
+	if (NULL == stream_cfg_cmd || NULL == axi_data)
+		return rc;
+
+	idx = HANDLE_TO_IDX(stream_cfg_cmd->axi_stream_handle);
+	if (idx < MAX_NUM_STREAM)
+		stream_info = &axi_data->stream_info[idx];
+	else
+		return rc;
 
 	switch (stream_cfg_cmd->output_format) {
 	case V4L2_PIX_FMT_SBGGR8:
@@ -203,7 +211,7 @@ static uint32_t msm_isp_axi_get_plane_size(
 				plane_cfg[plane_idx].output_width;
 		else
 			size = plane_cfg[plane_idx].output_height *
-				plane_cfg[plane_idx].output_width / 2;
+				plane_cfg[plane_idx].output_width;
 		break;
 	case V4L2_PIX_FMT_NV14:
 	case V4L2_PIX_FMT_NV41:
@@ -212,7 +220,7 @@ static uint32_t msm_isp_axi_get_plane_size(
 				plane_cfg[plane_idx].output_width;
 		else
 			size = plane_cfg[plane_idx].output_height *
-				plane_cfg[plane_idx].output_width / 8;
+				plane_cfg[plane_idx].output_width;
 		break;
 	case V4L2_PIX_FMT_NV16:
 	case V4L2_PIX_FMT_NV61:
@@ -427,10 +435,21 @@ void msm_isp_calculate_framedrop(
 	struct msm_vfe_axi_shared_data *axi_data,
 	struct msm_vfe_axi_stream_request_cmd *stream_cfg_cmd)
 {
-	struct msm_vfe_axi_stream *stream_info =
-		&axi_data->stream_info[
-		HANDLE_TO_IDX(stream_cfg_cmd->axi_stream_handle)];
-	uint32_t framedrop_period = msm_isp_get_framedrop_period(
+	struct msm_vfe_axi_stream *stream_info = NULL;
+	uint32_t framedrop_period = 0;
+	uint8_t idx = 0;
+
+	if (NULL == axi_data || NULL == stream_cfg_cmd)
+		return;
+
+	idx = HANDLE_TO_IDX(stream_cfg_cmd->axi_stream_handle);
+
+	if (idx < MAX_NUM_STREAM)
+		stream_info = &axi_data->stream_info[idx];
+	else
+		return;
+
+	framedrop_period = msm_isp_get_framedrop_period(
 	   stream_cfg_cmd->frame_skip_pattern);
 
 	if (stream_cfg_cmd->frame_skip_pattern == SKIP_ALL)
@@ -519,8 +538,17 @@ int msm_isp_request_axi_stream(struct vfe_device *vfe_dev, void *arg)
 
 			io_format = stream_info->output_format;
 		}
-		vfe_dev->hw_info->vfe_ops.axi_ops.cfg_io_format(
+		rc = vfe_dev->hw_info->vfe_ops.axi_ops.cfg_io_format(
 			vfe_dev, stream_info->stream_src, io_format);
+		if (rc) {
+			pr_err("%s: cfg io format failed\n", __func__);
+			msm_isp_axi_free_wm(&vfe_dev->axi_data,
+				stream_info);
+			msm_isp_axi_destroy_stream(&vfe_dev->axi_data,
+				HANDLE_TO_IDX(
+				stream_cfg_cmd->axi_stream_handle));
+			return rc;
+		}
 	}
 
 	msm_isp_calculate_framedrop(&vfe_dev->axi_data, stream_cfg_cmd);
@@ -760,8 +788,10 @@ static int msm_isp_cfg_ping_pong_address(struct vfe_device *vfe_dev,
 	rc = vfe_dev->buf_mgr->ops->get_buf(vfe_dev->buf_mgr,
 			vfe_dev->pdev->id, bufq_handle, &buf);
 	if (rc < 0) {
-		vfe_dev->error_info.
-			stream_framedrop_count[stream_idx]++;
+		if (stream_idx < MAX_NUM_STREAM)
+			vfe_dev->error_info.
+				stream_framedrop_count[stream_idx]++;
+		pr_err("%s: ====> ERROR: Drop frame (id = %d, bufq_handle = %x, get_buf = %d)\n", __func__, vfe_dev->pdev->id, bufq_handle, rc);
 		return rc;
 	}
 
@@ -988,7 +1018,7 @@ static int msm_isp_axi_wait_for_cfg_done(struct vfe_device *vfe_dev,
 	vfe_dev->axi_data.pipeline_update = camif_update;
 	vfe_dev->axi_data.stream_update = 2;
 	spin_unlock_irqrestore(&vfe_dev->shared_data_lock, flags);
-	rc = wait_for_completion_interruptible_timeout(
+	rc = wait_for_completion_timeout(
 		&vfe_dev->stream_config_complete,
 		msecs_to_jiffies(VFE_MAX_CFG_TIMEOUT));
 	if (rc == 0) {
@@ -1246,7 +1276,10 @@ int msm_isp_update_axi_stream(struct vfe_device *vfe_dev, void *arg)
 			return -EINVAL;
 		}
 		if (stream_info->state == ACTIVE &&
-			stream_info->stream_type == BURST_STREAM) {
+			stream_info->stream_type == BURST_STREAM &&
+			(1 != update_cmd->num_streams ||
+				UPDATE_STREAM_FRAMEDROP_PATTERN !=
+					update_cmd->update_type)) {
 			pr_err("%s: Cannot update active burst stream\n",
 				__func__);
 			return -EINVAL;
@@ -1273,7 +1306,10 @@ int msm_isp_update_axi_stream(struct vfe_device *vfe_dev, void *arg)
 				msm_isp_get_framedrop_period(
 				   update_info->skip_pattern);
 			stream_info->runtime_init_frame_drop = 0;
-			stream_info->framedrop_pattern = 0x1;
+			if (update_info->skip_pattern == SKIP_ALL)
+				stream_info->framedrop_pattern = 0x0;
+			else
+				stream_info->framedrop_pattern = 0x1;
 			stream_info->framedrop_period = framedrop_period - 1;
 			vfe_dev->hw_info->vfe_ops.axi_ops.
 				cfg_framedrop(vfe_dev, stream_info);
