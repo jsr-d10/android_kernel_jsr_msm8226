@@ -1929,10 +1929,19 @@ int get_stop_num(void)
 
 // ----------------- pmem log sys ---------------------------------
 
+struct pmem_header_t {
+	int magic;
+	int cur_zone;
+	int zone_cnt[2];
+};
+
 static int      pmem_log_cnt = 0;
 static void   * pmem_virt = NULL;
 static uint32_t pmem_log_size = 0;
 static int      pmem_log_beg = 0;
+
+static void   * pmem_log_p = NULL;
+
 
 static int __init pmem_log_cnt_setup(char *str)
 {
@@ -1942,9 +1951,11 @@ static int __init pmem_log_cnt_setup(char *str)
 early_param("pmemlog", pmem_log_cnt_setup);
 
 
+#define PMEM_MAGIC      (0xFACEFACE)
 #define PMEM_LOG_ADDR   (0x7f200000)
 #define PMEM_LOG_SIZE   (0x00100000)
 #define PMEM_LOG_PAGES  (PMEM_LOG_SIZE / PAGE_SIZE)
+#define PMEM_ZONE_SIZE  (PMEM_LOG_SIZE / 2 - sizeof(struct pmem_header_t))
 
 int pmem_log_init(void)
 {
@@ -1952,6 +1963,8 @@ int pmem_log_init(void)
 	pgprot_t prot;
 	struct page **pages;
 	phys_addr_t addr;
+	struct pmem_header_t * hdr;
+	int cur_zone = 0;
 
 	if (pmem_virt) return 1;
 	if (pmem_log_cnt <= 0) return 0;
@@ -1965,10 +1978,26 @@ int pmem_log_init(void)
 	} 
 	pmem_virt = vmap(pages, PMEM_LOG_PAGES, VM_MAP, prot);
 	kfree(pages);
-	if (!pmem_virt) return 0;  
+	if (!pmem_virt) return 0;
+
+	hdr = (struct pmem_header_t *)pmem_virt;
+	if (hdr->magic != PMEM_MAGIC) {
+		hdr->magic = PMEM_MAGIC;
+		hdr->cur_zone = 0;
+		hdr->zone_cnt[0] = 1;
+		hdr->zone_cnt[1] = 0;
+	} else {
+	  cur_zone = hdr->cur_zone & 1;
+		cur_zone = (cur_zone ? 0 : 1);
+		hdr->cur_zone = cur_zone;
+		hdr->zone_cnt[cur_zone]++;
+	}
+	pmem_log_p = (void *)((uint32_t)pmem_virt + sizeof(struct pmem_header_t));
+	if (cur_zone) 
+		pmem_log_p = (void *)((uint32_t)pmem_log_p + PMEM_ZONE_SIZE);
 	
-	for (x = 0; x < PMEM_LOG_SIZE - 8; x += 4) {
-		__raw_writel_no_log(0, (uint32_t)pmem_virt + x);
+	for (x = 0; x < PMEM_ZONE_SIZE - 8; x += 4) {
+		__raw_writel_no_log(0, (uint32_t)pmem_log_p + x);
 	}
 	
 	return 1;
@@ -1977,14 +2006,14 @@ int pmem_log_init(void)
 int pmem_log_start(int act_log_cnt)
 {
 	uint32_t x;
-	if (!pmem_virt) return 0;
+	if (!pmem_log_p) return 0;
 	if (act_log_cnt < pmem_log_cnt) return 0;
 	pmem_log_beg = 1;
-	if (logged_chars < PMEM_LOG_SIZE - 100) {
+	if (logged_chars < PMEM_ZONE_SIZE - 100) {
 		for (x = 0; x < logged_chars; x++) {
-			__raw_writeb_no_log(log_buf[x], (uint32_t)pmem_virt + x);
+			__raw_writeb_no_log(log_buf[x], (uint32_t)pmem_log_p + x);
 		}
-		__raw_writeb_no_log('\n', (uint32_t)pmem_virt + logged_chars);
+		__raw_writeb_no_log('\n', (uint32_t)pmem_log_p + logged_chars);
 		pmem_log_size = logged_chars + 1;
 	}
 	return 1;
@@ -1992,10 +2021,12 @@ int pmem_log_start(int act_log_cnt)
 
 static void emit_log_char_pmem(char c)
 {
-	if (pmem_log_beg && pmem_virt && pmem_log_size < PMEM_LOG_SIZE-16) {
-		__raw_writeb_no_log(c, (uint32_t)pmem_virt + pmem_log_size);
-		pmem_log_size++;
-	}
+	if (!pmem_log_beg) return;
+	if (!pmem_log_p) return;
+	if (pmem_log_size >= PMEM_ZONE_SIZE-16) 
+		pmem_log_size = 0;
+	__raw_writeb_no_log(c, (uint32_t)pmem_log_p + pmem_log_size);
+	pmem_log_size++;
 }
 
 
