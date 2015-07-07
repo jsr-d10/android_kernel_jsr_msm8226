@@ -390,7 +390,7 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 			//rc = 0;
 			//pr_err("%s: INFO: bufq->buf_type == ISP_SHARE_BUF \n", __func__);
 		}
-		pr_err("%s: ====> ERROR: Incorrect *buf_info = %p, rc = %d\n", __func__, *buf_info, rc);
+		/*pr_err("%s: ====> ERROR: Incorrect *buf_info = %p, rc = %d\n", __func__, *buf_info, rc);*/
 	} else {
 		(*buf_info)->state = MSM_ISP_BUFFER_STATE_DEQUEUED;
 		if (bufq->buf_type == ISP_SHARE_BUF) {
