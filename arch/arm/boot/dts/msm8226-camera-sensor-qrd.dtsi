@@ -24,14 +24,14 @@
 
 &cci {
 
-	actuator2: qcom,actuator@13 {
+	actuator13: qcom,actuator@13 {
 		cell-index = <2>;
 		reg = <0x13>;
 		compatible = "qcom,actuator";
 		qcom,cci-master = <0>;
 	};
 
-	eeprom0: qcom,eeprom@13 {
+	eeprom13: qcom,eeprom@13 {
 		cell-index = <0>;
 		reg = <0x13 0x0>;
 		qcom,eeprom-name = "sunny_q13v03a";
@@ -86,9 +86,9 @@
 		qcom,slave-id = <0x6c 0x300a 0xd850>;
 		qcom,csiphy-sd-index = <0>;
 		qcom,csid-sd-index = <0>;
-		qcom,actuator-src = <&actuator2>;
+		qcom,actuator-src = <&actuator13>;
 		qcom,led-flash-src = <&led_flash0>;
-		qcom,eeprom-src = <&eeprom0>;
+		qcom,eeprom-src = <&eeprom13>;
 		qcom,mount-angle = <90>;
 		qcom,sensor-name = "ov13850";
 		
@@ -122,14 +122,14 @@
 		qcom,cci-master = <0>;
 	};
 
-	actuator0: qcom,actuator@18 {
+	actuator18: qcom,actuator@18 {
 		cell-index = <0>;
 		reg = <0x18>;
 		compatible = "qcom,actuator";
 		qcom,cci-master = <0>;
 	};
 
-	eeprom1: qcom,eeprom@6b{
+	eeprom6b: qcom,eeprom@6b{
 		cell-index = <1>;
 		reg = <0x6b 0x0>;
 		qcom,eeprom-name = "f4k37ab_qtech_t4k37";
@@ -183,9 +183,9 @@
 		qcom,slave-id = <0x6c 0x0 0x1c21>;
 		qcom,csiphy-sd-index = <0>;
 		qcom,csid-sd-index = <0>;
-		qcom,actuator-src = <&actuator0>;
+		qcom,actuator-src = <&actuator18>;
 		qcom,led-flash-src = <&led_flash0>;
-		qcom,eeprom-src = <&eeprom1>;
+		qcom,eeprom-src = <&eeprom6b>;
 		qcom,mount-angle = <90>;
 		qcom,sensor-name = "t4k37ab";
 		
@@ -219,18 +219,52 @@
 		qcom,cci-master = <0>;
 	};
 
-	/* ------ AUX camera block -------- */
-/*
-	actuator1: qcom,actuator@36 {
+	/* ------ SONY camera block -------- */
+
+	actuator36: qcom,actuator@36 {
 		cell-index = <1>;
 		reg = <0x36>;
 		compatible = "qcom,actuator";
 		qcom,cci-master = <0>;
 	};
 
-	qcom,camera@6d {
+	qcom,camera@6e {
+		compatible = "qcom,imx135";
+		reg = <0x6e>;
+		qcom,slave-id = <0x20 0x16 0x0135>;
+		qcom,csiphy-sd-index = <0>;
+		qcom,csid-sd-index = <0>;
+		qcom,mount-angle = <90>;
+		qcom,sensor-name = "imx135";
+		qcom,actuator-src = <&actuator36>;
+		qcom,led-flash-src = <&led_flash0>;
+		
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 26 0>,
+			<&msmgpio 36 0>,
+			<&msmgpio 15 0>,
+			<&msmgpio 14 0>,
+			<&msmgpio 13 0>;
+		qcom,gpio-standby = <1>;
+		qcom,gpio-vio = <2>;
+		qcom,gpio-vana = <3>;
+		qcom,gpio-vdig = <4>;
+		qcom,gpio-req-tbl-num = <0 1 2 3 4>;
+		qcom,gpio-req-tbl-flags = <1 0 0 0 0>;
+		qcom,gpio-req-tbl-label = "CAMIF_MCLK", "CAM_STANDBY", "CAM_VIO", "CAM_VANA", "CAM_VDIG";
+		qcom,csi-lane-assign = <0x4320>;
+		qcom,csi-lane-mask = <0x1f>;
+		qcom,sensor-position = <0>;
+		qcom,sensor-mode = <1>;
+		qcom,cci-master = <0>;
+		status = "ok";
+	};	
+
+	/* ------ FRONTAL camera block -------- */
+
+	qcom,camera@6c {
 		compatible = "qcom,ov2720";
-		reg = <0x6d>;
+		reg = <0x6c 0x0>;
 		qcom,slave-id = <0x6c 0x300a 0x2720>;
 		qcom,csiphy-sd-index = <1>;
 		qcom,csid-sd-index = <1>;
@@ -271,8 +305,8 @@
 		qcom,cci-master = <0>;
 		status = "ok";
 	};
-
-	eeprom2: qcom,eeprom@6f{
+	
+	eeprom6f: qcom,eeprom@6f{
 		cell-index = <2>;
 		reg = <0x6f 0x0>;
 		qcom,eeprom-name = "sunny_p5v23c";
@@ -316,7 +350,10 @@
 		qcom,cam-vreg-op-mode = <200000 0 80000>;
 		
 		qcom,gpio-no-mux = <0>;
-		gpios = <&msmgpio 26 0>, <&msmgpio 28 0>, <&msmgpio 35 0>, <&msmgpio 22 0>;
+		gpios = <&msmgpio 26 0>, 
+			<&msmgpio 28 0>, 
+			<&msmgpio 35 0>, 
+			<&msmgpio 22 0>;
 		qcom,gpio-reset = <1>;
 		qcom,gpio-standby = <2>;
 		qcom,gpio-vdig = <3>;
@@ -335,7 +372,7 @@
 		qcom,slave-id = <0x6c 0x300a 0x5648>;
 		qcom,csiphy-sd-index = <1>;
 		qcom,csid-sd-index = <1>;
-		qcom,eeprom-src = <&eeprom2>;
+		qcom,eeprom-src = <&eeprom6f>;
 		qcom,mount-angle = <270>;
 		qcom,sensor-name = "skuf_ov5648_p5v23c";
 		
@@ -373,5 +410,5 @@
 		qcom,cci-master = <0>;
 		status = "ok";
 	};
-*/
+
 };
