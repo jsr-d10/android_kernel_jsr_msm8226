@@ -42,13 +42,18 @@ static long msm_led_flash_subdev_ioctl(struct v4l2_subdev *sd,
 		return fctrl->func_tbl->flash_get_subdev_id(fctrl, argp);
 	case VIDIOC_MSM_FLASH_LED_DATA_CFG:
 		return fctrl->func_tbl->flash_led_config(fctrl, argp);
-	case VIDIOC_MSM_FLASH_LED_DATA_CFG_04:
-		return fctrl->func_tbl->flash_led_config(fctrl, argp);
+	case VIDIOC_MSM_FLASH_LED_DATA_CFG_04: {
+		struct msm_camera_led_cfg_t * src = (struct msm_camera_led_cfg_t *)argp;
+		struct msm_camera_led_cfg_t dst;
+		dst.cfgtype = src->cfgtype;
+		dst.led_current = 0;
+		return fctrl->func_tbl->flash_led_config(fctrl, (void *)&dst);
+	}
 	case MSM_SD_SHUTDOWN:
 		*(int *)argp = MSM_CAMERA_LED_RELEASE;
 		return fctrl->func_tbl->flash_led_config(fctrl, argp);
 	default:
-		pr_err("invalid cmd %d\n", cmd);
+		pr_err("%s: invalid cmd 0x%x\n", __func__, cmd);
 		return -ENOIOCTLCMD;
 	}
 }
