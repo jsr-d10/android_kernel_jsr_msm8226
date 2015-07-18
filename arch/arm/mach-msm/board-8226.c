@@ -74,10 +74,6 @@ static struct memtype_reserve msm8226_reserve_table[] __initdata = {
 	},
 };
 
-#define JSR_PERSISTENT_RAM_ADDR   0x7F100000
-#define JSR_PERSISTENT_RAM_SIZE   0x00100000
-#define JSR_RAM_CONSOLE_SIZE     (512 * SZ_1K)
-
 #ifdef CONFIG_ANDROID_RAM_CONSOLE
 static struct platform_device ram_console_device = {
 	.name = "ram_console",
@@ -97,13 +93,13 @@ static struct persistent_ram_descriptor pram_descs[] __initdata = {
 #ifdef CONFIG_ANDROID_RAM_CONSOLE
 	{
 		.name = "ram_console",
-		.size = JSR_RAM_CONSOLE_SIZE,
+		.size = 0,
 	},
 #endif
 #ifdef CONFIG_PERSISTENT_TRACER
 	{
 		.name = "persistent_trace",
-		.size = JSR_RAM_CONSOLE_SIZE,
+		.size = 0,
 	},
 #endif
 };
@@ -111,17 +107,49 @@ static struct persistent_ram_descriptor pram_descs[] __initdata = {
 static struct persistent_ram persist_ram __initdata = {
 	.descs = pram_descs,
 	.num_descs = ARRAY_SIZE(pram_descs),
-	.start = JSR_PERSISTENT_RAM_ADDR,
-	.size = JSR_PERSISTENT_RAM_SIZE
+	.start = 0,
+	.size = 0
 };
 
-static void __init add_persist_ram_devices(void)
+static int __init add_persist_ram_devices(void)
 {
-	int ret;
+	int ret, i;
+	struct memtype_reserve * mt = NULL;
+	phys_addr_t base;
+	int size;
+	int pram_size = get_persist_ram_size(0);
+
+	base = get_persist_ram_info(0, &size);
+	if (!pram_size) {
+		pr_info("%s: pram_size=0x%x, base=0x%lx \n", __func__, pram_size, (long)base);
+		return 0;
+	}
+	if (!base) {
+		mt = &reserve_info->memtype_reserve_table[MEMTYPE_EBI1];
+		if (!mt->start) {
+			pr_err("%s: EBI1 addr = NULL \n", __func__);
+			return -ENODEV;
+		}
+		size = pram_size;
+		base = mt->start - size - PAGE_SIZE;
+	}
+	if (size <= 0)
+		return -EINVAL;
+
+	persist_ram.start = base;
+	persist_ram.size = size;	
+	for (i=0; i < persist_ram.num_descs; i++) {
+		persist_ram.descs[i].size = (phys_addr_t)(size / persist_ram.num_descs);
+	}
 	pr_info("PERSIST RAM CONSOLE START ADDR : 0x%x\n", persist_ram.start);
+	if (!mt)
+		persist_ram.start++;
 	ret = persistent_ram_early_init(&persist_ram);
+	if (!mt)
+		persist_ram.start--;
 	if (ret)
-		pr_err("%s: failed to initialize persistent ram\n", __func__);
+		pr_err("%s: failed to initialize persistent ram at 0x%x \n", __func__, persist_ram.start);
+	return ret;
 }
 
 #endif
