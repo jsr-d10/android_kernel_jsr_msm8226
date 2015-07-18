@@ -316,10 +316,12 @@ static inline void print_hex_dump_bytes(const char *prefix_str, int prefix_type,
 
 #endif
 
-int do_stop_num(int x);
-void set_stop_num(int num);
-int get_stop_num(void);
+int get_persist_ram_size(int full);
+int get_persist_ram_status(void);
+int reserve_persist_ram(phys_addr_t max_low, phys_addr_t max_high);
+phys_addr_t get_persist_ram_info(int idx, int * size);
 
+int pmem_log_get_size(void);
 int pmem_log_init(void);
 int pmem_log_start(int act_log_cnt);
 
