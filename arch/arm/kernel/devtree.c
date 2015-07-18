@@ -70,6 +70,7 @@ void __init arm_dt_memblock_reserve(void)
 		if (!size)
 			break;
 		memblock_reserve(base, size);
+		printk(KERN_NOTICE "FDT memblock reserve: 0x%lx (size=0x%lx)\n", (long)base, (long)size);
 	}
 }
 
