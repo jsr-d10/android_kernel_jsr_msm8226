@@ -1762,6 +1762,27 @@ struct mass_storage_function_config {
 	struct fsg_common *common;
 };
 
+
+static int lun_cdrom = 0;   // default: not use CDROM
+
+static int __init lun_cdrom_setup(char *str)
+{
+	get_option(&str, &lun_cdrom);
+	return 0;
+}
+early_param("lun_cdrom", lun_cdrom_setup);
+
+
+static int lun_uicc = 0;   // default: not use UICC
+
+static int __init lun_uicc_setup(char *str)
+{
+	get_option(&str, &lun_uicc);
+	return 0;
+}
+early_param("lun_uicc", lun_uicc_setup);
+
+
 #define MAX_LUN_NAME 8
 static int mass_storage_function_init(struct android_usb_function *f,
 					struct usb_composite_dev *cdev)
@@ -1771,6 +1792,8 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	struct fsg_common *common;
 	int err;
 	int i, n;
+	int cdrom_num;
+	int intums_num;
 	char name[FSG_MAX_LUNS][MAX_LUN_NAME];
 	u8 uicc_nluns = dev->pdata ? dev->pdata->uicc_nluns : 0;
 
@@ -1783,19 +1806,32 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	snprintf(name[0], MAX_LUN_NAME, "lun");
 	config->fsg.luns[0].removable = 1;
 
-	if (dev->pdata && dev->pdata->cdrom) {
-		config->fsg.luns[config->fsg.nluns].cdrom = 1;
-		config->fsg.luns[config->fsg.nluns].ro = 1;
-		config->fsg.luns[config->fsg.nluns].removable = 0;
-		snprintf(name[config->fsg.nluns], MAX_LUN_NAME, "lun0");
-		config->fsg.nluns++;
-	}
-	if (dev->pdata && dev->pdata->internal_ums) {
-		config->fsg.luns[config->fsg.nluns].cdrom = 0;
-		config->fsg.luns[config->fsg.nluns].ro = 0;
-		config->fsg.luns[config->fsg.nluns].removable = 1;
-		snprintf(name[config->fsg.nluns], MAX_LUN_NAME, "lun1");
-		config->fsg.nluns++;
+	cdrom_num = lun_cdrom;
+	if (cdrom_num > 2)
+		cdrom_num = 2;
+
+	if (dev->pdata) {
+		if (!dev->pdata->cdrom)
+			cdrom_num = 0;
+		intums_num = dev->pdata->internal_ums ? 1 : 0;
+		if (cdrom_num == 2 && !intums_num)
+			cdrom_num = 1;
+		if (cdrom_num == 1 && intums_num)
+			intums_num = 2;
+		if (cdrom_num) {
+			config->fsg.luns[cdrom_num].cdrom = 1;
+			config->fsg.luns[cdrom_num].ro = 1;
+			config->fsg.luns[cdrom_num].removable = 0;
+			snprintf(name[cdrom_num], MAX_LUN_NAME, "lun%d", cdrom_num-1);
+			config->fsg.nluns++;
+		}
+		if (intums_num) {
+			config->fsg.luns[intums_num].cdrom = 0;
+			config->fsg.luns[intums_num].ro = 0;
+			config->fsg.luns[intums_num].removable = 1;
+			snprintf(name[intums_num], MAX_LUN_NAME, "lun%d", intums_num-1);
+			config->fsg.nluns++;
+		}
 	}
 
 	if (uicc_nluns > FSG_MAX_LUNS - config->fsg.nluns) {
@@ -1803,13 +1839,14 @@ static int mass_storage_function_init(struct android_usb_function *f,
 		pr_debug("limiting uicc luns to %d\n", uicc_nluns);
 	}
 
-	for (i = 0; i < uicc_nluns; i++) {
-		n = config->fsg.nluns;
-		snprintf(name[n], MAX_LUN_NAME, "uicc%d", i);
-		config->fsg.luns[n].removable = 1;
-		config->fsg.nluns++;
+	if (lun_uicc) {
+		for (i = 0; i < uicc_nluns; i++) {
+			n = config->fsg.nluns;
+			snprintf(name[n], MAX_LUN_NAME, "uicc%d", i);
+			config->fsg.luns[n].removable = 1;
+			config->fsg.nluns++;
+		}
 	}
-
 	common = fsg_common_init(NULL, cdev, &config->fsg);
 	if (IS_ERR(common)) {
 		kfree(config);
