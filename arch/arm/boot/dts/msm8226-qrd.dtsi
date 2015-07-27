@@ -32,7 +32,7 @@
 			/* synaptics,power-down;    */ /* fully power down regulators in suspend  */
 			/* synaptics,disable-gpios; */ /* specify to disable gpios in suspend (power saving) */
 		};
-		/*
+
 		focaltech@38 {
 			compatible = "focaltech,5x06";
 			reg = <0x38>;
@@ -41,11 +41,12 @@
 			vdd-supply = <&pm8226_l19>;
 			vcc_i2c-supply = <&pm8226_lvs1>;
 			focaltech,name = "ft5x06";
-			focaltech,family-id = <0x55>;
+			focaltech,family-id = <0x0A>;
+			focaltech,ignore-id-check;
 			focaltech,reset-gpio = <&msmgpio 16 0x00>;
 			focaltech,irq-gpio = <&msmgpio 17 0x00>;
-			focaltech,display-coords = <0 0 1080 1920>;
-			focaltech,panel-coords = <0 0 1080 2000>;
+			focaltech,display-coords = <0 0 720 1280>;
+			focaltech,panel-coords = <0 0 720 1280>;
 			focaltech,button-map= <139 102 158>;
 			focaltech,no-force-update;
 			focaltech,i2c-pull-up;
@@ -53,15 +54,14 @@
 			focaltech,hard-reset-delay-ms = <20>;
 			focaltech,soft-reset-delay-ms = <150>;
 			focaltech,num-max-touches = <5>;
-			focaltech,fw-name = "ft_8226_qrd_1080p_fw.bin";
 			focaltech,fw-delay-aa-ms = <50>;
 			focaltech,fw-delay-55-ms = <30>;
 			focaltech,fw-upgrade-id1 = <0x79>;
-			focaltech,fw-upgrade-id2 = <0x03>;
+			focaltech,fw-upgrade-id2 = <0x07>;
 			focaltech,fw-delay-readid-ms = <10>;
 			focaltech,fw-delay-era-flsh-ms = <2000>;
+			focaltech,fw-auto-cal;
 		};
-		*/
 	};
 
 	gen-vkeys {
