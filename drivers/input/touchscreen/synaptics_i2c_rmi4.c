@@ -39,6 +39,18 @@
 #define INPUT_PHYS_NAME "synaptics_rmi4_i2c/input0"
 #define DEBUGFS_DIR_NAME "ts_debug"
 
+static int g_ts_init = 0;
+
+void set_ts_init(int value)
+{
+	g_ts_init = value;
+}
+
+int get_ts_init(void)
+{
+	return g_ts_init;
+}
+
 #define RESET_DELAY 100
 
 #define TYPE_B_PROTOCOL
@@ -2852,6 +2864,8 @@ static int __devinit synaptics_rmi4_probe(struct i2c_client *client,
 			client->dev.platform_data;
 	struct dentry *temp;
 
+	if (get_ts_init()) return -ENFILE;
+	
 	if (!i2c_check_functionality(client->adapter,
 			I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(&client->dev,
@@ -3122,6 +3136,7 @@ static int __devinit synaptics_rmi4_probe(struct i2c_client *client,
 		return retval;
 	}
 
+	set_ts_init(1);
 	return retval;
 
 err_sysfs:

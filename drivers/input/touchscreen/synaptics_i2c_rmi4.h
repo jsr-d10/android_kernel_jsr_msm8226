@@ -306,4 +306,7 @@ static inline void hstoba(unsigned char *dest, unsigned short src)
 	dest[1] = src / 0x100;
 }
 
+void set_ts_init(int value);
+int get_ts_init(void);
+
 #endif

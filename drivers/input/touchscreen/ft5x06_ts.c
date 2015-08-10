@@ -31,6 +31,8 @@
 #include <linux/debugfs.h>
 #include <linux/input/ft5x06_ts.h>
 
+#include "synaptics_i2c_rmi4.h"
+
 #if defined(CONFIG_FB)
 #include <linux/notifier.h>
 #include <linux/fb.h>
@@ -1378,6 +1380,8 @@ static int ft5x06_ts_probe(struct i2c_client *client,
 	u8 reg_addr;
 	int err, len;
 
+	if (get_ts_init()) return -ENFILE;
+	
 	if (client->dev.of_node) {
 		pdata = devm_kzalloc(&client->dev,
 			sizeof(struct ft5x06_ts_platform_data), GFP_KERNEL);
@@ -1654,6 +1658,7 @@ static int ft5x06_ts_probe(struct i2c_client *client,
 	register_early_suspend(&data->early_suspend);
 #endif
 
+	set_ts_init(1);
 	return 0;
 
 free_debug_dir:
