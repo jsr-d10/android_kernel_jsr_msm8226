@@ -1,6 +1,0 @@
-#
-# exFAT filesystem
-#
-menuconfig EXFAT_DRV
-	bool "exFAT filesystem support"
-  default n
