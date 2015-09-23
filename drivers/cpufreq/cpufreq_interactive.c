@@ -753,7 +753,7 @@ static unsigned int *get_tokenized_data(const char *buf, int *num_tokens)
 
 	cp = buf;
 	while ((cp = strpbrk(cp + 1, " :")))
-		ntokens++;
+		++ntokens;
 
 	if (!(ntokens & 0x1))
 		goto err;
@@ -773,7 +773,7 @@ static unsigned int *get_tokenized_data(const char *buf, int *num_tokens)
 		cp = strpbrk(cp, " :");
 		if (!cp)
 			break;
-		cp++;
+		++cp;
 	}
 
 	if (i != ntokens)
@@ -797,11 +797,11 @@ static ssize_t show_target_loads(
 
 	spin_lock_irqsave(&target_loads_lock, flags);
 
-	for (i = 0; i < ntarget_loads; i++)
+	for (i = 0; i < ntarget_loads; ++i)
 		ret += sprintf(buf + ret, "%u%s", target_loads[i],
 			       i & 0x1 ? ":" : " ");
-
-	ret += sprintf(buf + --ret, "\n");
+--ret;
+	ret += sprintf(buf + ret, "\n");
 	spin_unlock_irqrestore(&target_loads_lock, flags);
 	return ret;
 }
@@ -840,11 +840,11 @@ static ssize_t show_above_hispeed_delay(
 
 	spin_lock_irqsave(&above_hispeed_delay_lock, flags);
 
-	for (i = 0; i < nabove_hispeed_delay; i++)
+	for (i = 0; i < nabove_hispeed_delay; ++i)
 		ret += sprintf(buf + ret, "%u%s", above_hispeed_delay[i],
 			       i & 0x1 ? ":" : " ");
-
-	ret += sprintf(buf + --ret, "\n");
+--ret;
+	ret += sprintf(buf + ret, "\n");
 	spin_unlock_irqrestore(&above_hispeed_delay_lock, flags);
 	return ret;
 }
