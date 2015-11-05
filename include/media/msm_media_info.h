@@ -79,6 +79,18 @@ enum color_fmts {
 	COLOR_FMT_NV21,
 };
 
+static inline unsigned int VENUS_EXTRADATA_SIZE(int width, int height)
+{
+	(void)height;
+	(void)width;
+
+	/*
+	 * This VENUS_EXTRADATA_SIZE breaks video camera with HighScreen IIse
+	 * camera blobs and need to be set to zero (S-trace). Thanks OatIT
+	 */
+	return 0;
+}
+
 static inline unsigned int VENUS_Y_STRIDE(int color_fmt, int width)
 {
 	unsigned int alignment, stride = 0;
@@ -158,7 +170,7 @@ invalid_input:
 static inline unsigned int VENUS_BUFFER_SIZE(
 	int color_fmt, int width, int height)
 {
-	const unsigned int extra_size = 8*1024;
+	const unsigned int extra_size = VENUS_EXTRADATA_SIZE(width, height);
 	unsigned int uv_alignment = 0, size = 0;
 	unsigned int y_plane, uv_plane, y_stride,
 		uv_stride, y_sclines, uv_sclines;
