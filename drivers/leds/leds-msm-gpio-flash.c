@@ -54,13 +54,12 @@ static void led_gpio_brightness_set(struct led_classdev *led_cdev,
 	int brightness = value;
 	int flash_en = 0, flash_now = 0;
 
-#ifdef CONFIG_JSR_TORCH_WAKE_LOCK	
-	if (brightness >= LED_FULL) {	  
-		if (torch_wake_lock_flag == 0x55)
-			wake_unlock(&flash_led->torch_wake_lock);
+#ifdef CONFIG_JSR_TORCH_WAKE_LOCK
+	if (brightness >= LED_FULL) {
 		flash_en = 1;
 		flash_now = 1;
-		torch_wake_lock_flag = 0;
+                torch_wake_lock_flag = 0x55;
+                wake_lock(&flash_led->torch_wake_lock);
 	} else
 	if (brightness >= LED_HALF) {
 		flash_en = 1;
@@ -72,7 +71,7 @@ static void led_gpio_brightness_set(struct led_classdev *led_cdev,
 			wake_unlock(&flash_led->torch_wake_lock);
 		flash_en = 0;
 		flash_now = 0;
-		torch_wake_lock_flag = 0;	
+		torch_wake_lock_flag = 0;
 	}
 #else
 	if (brightness > LED_HALF) {
