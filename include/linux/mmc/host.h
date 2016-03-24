@@ -309,6 +309,14 @@ struct mmc_host {
 #define MMC_CAP2_CORE_PM	(1 << 23)       /* use PM framework */
 #define MMC_CAP2_HS400		(MMC_CAP2_HS400_1_8V | \
 				 MMC_CAP2_HS400_1_2V)
+
+/*
+ * disable the block devices' pre/post feature
+ * So that the next data transfer will only be perpared/triggered
+ * when previous transfer has been totally finished
+ */
+#define MMC_CAP2_DISABLE_BLK_ASYNC   (1 << 30)
+
 	mmc_pm_flag_t		pm_caps;	/* supported pm features */
 
 	int			clk_requests;	/* internal reference counter */

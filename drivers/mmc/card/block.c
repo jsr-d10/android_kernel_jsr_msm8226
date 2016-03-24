@@ -3101,6 +3101,9 @@ static const struct mmc_fixup blk_fixups[] =
 	MMC_FIXUP("SEM08G", 0x45, CID_OEMID_ANY, add_quirk_mmc,
 		  MMC_QUIRK_INAND_DATA_TIMEOUT),
 
+	MMC_FIXUP("SEM08G", 0x45, CID_OEMID_ANY, add_quirk_mmc,
+		  MMC_QUIRK_SANDISK_MLC),
+
 	/*
 	 * On these Samsung MoviNAND parts, performing secure erase or
 	 * secure trim can result in unrecoverable corruption due to a
