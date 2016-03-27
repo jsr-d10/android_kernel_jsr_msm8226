@@ -206,6 +206,22 @@ static int __init quiet_kernel(char *str)
 early_param("debug", debug_kernel);
 early_param("quiet", quiet_kernel);
 
+static int zombie_mode;
+static int __init board_zombie_mode_init (char *s)
+{
+	if (!strcmp(s, "zombie!")) {
+		printk(KERN_NOTICE "S-trace: zombie mode engaged, aboot told me\n");
+		zombie_mode = 1;
+	}
+	return 1;
+}
+__setup("androidboot.mode=", board_zombie_mode_init);
+
+int board_zombie_mode(void)
+{
+	return zombie_mode;
+}
+
 static int __init loglevel(char *str)
 {
 	int newlevel;
