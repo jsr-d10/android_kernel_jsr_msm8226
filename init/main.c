@@ -206,6 +206,22 @@ static int __init quiet_kernel(char *str)
 early_param("debug", debug_kernel);
 early_param("quiet", quiet_kernel);
 
+static int dead_mode;
+static int __init board_dead_mode_init (char *s)
+{
+	if (!strcmp(s, "zombie!")) {
+		printk(KERN_NOTICE "S-trace: dead mode engaged, aboot told me\n");
+		dead_mode = 1;
+	}
+	return 1;
+}
+__setup("androidboot.dead=", board_dead_mode_init);
+
+int board_dead_mode(void)
+{
+	return dead_mode;
+}
+
 static int __init loglevel(char *str)
 {
 	int newlevel;

@@ -44,6 +44,8 @@
 
 #include "sdhci-pltfm.h"
 
+int board_dead_mode(void);
+
 enum sdc_mpm_pin_state {
 	SDC_DAT1_DISABLE,
 	SDC_DAT1_ENABLE,
@@ -3033,6 +3035,13 @@ static int __devinit sdhci_msm_probe(struct platform_device *pdev)
 			spin_unlock_irqrestore(&host->lock, flags);
 		}
 	}
+
+	if (board_dead_mode() && strncmp(host->hw_name, "msm_sdcc.1", sizeof("msm_sdcc.1")) == 0) {
+		printk("%s:%d S-trace: NOT adding '%s' host - aboot told me that eMMC is dead\n", __func__, __LINE__, host->hw_name);
+		goto free_cd_gpio;
+	}
+	else
+		printk("%s:%d S-trace: adding '%s' host\n", __func__, __LINE__, host->hw_name);
 
 	ret = sdhci_add_host(host);
 	if (ret) {
