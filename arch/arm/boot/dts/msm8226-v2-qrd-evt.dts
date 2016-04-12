@@ -11,6 +11,7 @@
  */
 
 /dts-v1/;
+/memreserve/ 0x0ff4c6e4 0x10000;
 /include/ "msm8226-v2.dtsi"
 /include/ "msm8226-qrd.dtsi"
 /include/ "msm8226-jsr-i2c.dtsi"
