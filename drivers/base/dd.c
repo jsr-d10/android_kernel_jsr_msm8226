@@ -463,7 +463,7 @@ static int __driver_attach(struct device *dev, void *data)
  */
 int driver_attach(struct device_driver *drv)
 {
-	return bus_for_each_dev(drv->bus, NULL, drv, __driver_attach);
+	return bus_for_each_dev(drv->bus, (struct device *)1, drv, __driver_attach);
 }
 EXPORT_SYMBOL_GPL(driver_attach);
 

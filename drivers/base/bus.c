@@ -19,6 +19,7 @@
 #include <linux/mutex.h>
 #include "base.h"
 #include "power/power.h"
+#include <linux/printk.h>
 
 /* /sys/devices/system */
 /* FIXME: make static after drivers/base/sys.c is deleted */
@@ -287,21 +288,57 @@ static struct device *next_device(struct klist_iter *i)
  * to retain this data, it should do so, and increment the reference
  * count in the supplied callback.
  */
+
+#define MSM_SDCC_ITEM_MAX  10
+
 int bus_for_each_dev(struct bus_type *bus, struct device *start,
 		     void *data, int (*fn)(struct device *, void *))
 {
 	struct klist_iter i;
 	struct device *dev;
 	int error = 0;
+	struct device_driver *drv = NULL;
+	int msm_sdcc = 0;
+	struct device * msm_sdcc_items[MSM_SDCC_ITEM_MAX];
+	size_t x;
 
 	if (!bus)
 		return -EINVAL;
 
+	if ((size_t)start == 1) {
+		start = NULL;
+		drv = (struct device_driver *)data;
+		if (drv->name && strcmp(drv->name, "sdhci_msm") == 0) {
+			msm_sdcc = 1;
+			memset(msm_sdcc_items, 0, sizeof(msm_sdcc_items));
+		}
+	}
+
 	klist_iter_init_node(&bus->p->klist_devices, &i,
-			     (start ? &start->p->knode_bus : NULL));
-	while ((dev = next_device(&i)) && !error)
-		error = fn(dev, data);
+					 (start ? &start->p->knode_bus : NULL));
+	while ((dev = next_device(&i)) && !error) {
+		if (msm_sdcc && strncmp(dev_name(dev), "msm_sdcc.", 9) == 0) {
+			const char * dname = dev_name(dev);
+			size_t num = (size_t)dname[9] - '0';
+			if (num < MSM_SDCC_ITEM_MAX)
+				msm_sdcc_items[num] = dev;
+		} else {
+			error = fn(dev, data);
+		}	
+	}
 	klist_iter_exit(&i);
+
+	if (msm_sdcc) {
+		for (x = 0; x < MSM_SDCC_ITEM_MAX; x++) {
+			dev = msm_sdcc_items[x];
+			if (dev) {
+				pr_info("%s: call dev probe for \"%s\" [%s] \n", __func__, 
+					dev_name(dev), dev->of_node ? dev->of_node->full_name : "???");
+				fn(dev, data);
+			}
+		}
+	}
+
 	return error;
 }
 EXPORT_SYMBOL_GPL(bus_for_each_dev);
