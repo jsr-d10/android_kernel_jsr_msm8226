@@ -246,6 +246,8 @@ void __init msm8226_add_drivers(void)
 	add_persistent_device();
 }
 
+static int sdcc_names_swaped = 0;
+
 void __init msm8226_init(void)
 {
 	struct of_dev_auxdata *adata = msm8226_auxdata_lookup;
@@ -253,6 +255,23 @@ void __init msm8226_init(void)
 	if (socinfo_init() < 0)
 		pr_err("%s: socinfo_init() failed\n", __func__);
 
+	if (swap_sdcc && !sdcc_names_swaped) {
+		do {
+			if (!adata->compatible) break;
+			if (adata->name) {
+				if (strlen(adata->name) != 10) continue;
+				if (strncmp(adata->name, "msm_sdcc.", 9)) continue;
+				if (adata->name[9] == '1')
+					adata->name[9] = '2';
+				if (adata->name[9] == '2')
+					adata->name[9] = '1';
+			}
+		} while (++adata);
+		sdcc_names_swaped = 1;
+		pr_info("%s: struct msm8226_auxdata_lookup changed (swap_sdcc) \n", __func__);
+	}
+
+	adata = msm8226_auxdata_lookup;
 	msm8226_init_gpiomux();
 	board_dt_populate(adata);
 	msm8226_add_drivers();
