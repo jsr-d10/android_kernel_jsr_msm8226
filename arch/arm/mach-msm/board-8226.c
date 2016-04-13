@@ -276,8 +276,23 @@ void __init msm8226_init(void)
 		pr_err("%s: socinfo_init() failed\n", __func__);
 
 	if (swap_sdcc) {
+		int i;
+		struct clk_lookup * clk = msm8226_clock_init_data.table;
+		int clk_size = (int)msm8226_clock_init_data.size;
+
 		adata = msm8226_auxdata_lookup_swap;
 		pr_info("%s: use msm8226_auxdata_lookup_swap (swap_sdcc) \n", __func__);
+
+		for (i = 0; i < clk_size; i++) {
+			if (!clk[i].dev_id)
+				continue;
+			if (strcmp(clk[i].dev_id, "msm_sdcc.1") == 0) {
+				clk[i].dev_id = "msm_sdcc.2";
+			} else
+			if (strcmp(clk[i].dev_id, "msm_sdcc.2") == 0) {
+				clk[i].dev_id = "msm_sdcc.1";
+			}
+		}
 	}
 	msm8226_init_gpiomux();
 	board_dt_populate(adata);
