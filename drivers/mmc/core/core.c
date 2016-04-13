@@ -58,6 +58,17 @@ static int __init swap_sdcc_setup(char *str)
 }
 __setup("androidboot.swap_sdcc=", swap_sdcc_setup);
 
+int mmc_zombie_mode = 0;  // deprecated param
+
+static int __init mmc_zombie_mode_setup(char *str)
+{
+	if (strcmp(str, "zombie!") == 0) {
+		mmc_zombie_mode = 1;
+	}
+	return 1;
+}
+__setup("androidboot.mode=", mmc_zombie_mode_setup);
+
 
 static void mmc_clk_scaling(struct mmc_host *host, bool from_wq);
 

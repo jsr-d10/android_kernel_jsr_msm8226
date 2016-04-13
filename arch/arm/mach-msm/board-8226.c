@@ -275,6 +275,10 @@ void __init msm8226_init(void)
 	if (socinfo_init() < 0)
 		pr_err("%s: socinfo_init() failed\n", __func__);
 
+	if (mmc_zombie_mode) {
+		swap_sdcc = 2;
+		pr_info("%s: zombie mode engaged, aboot told me\n", __func__);
+	}
 	if (swap_sdcc) {
 		int i;
 		struct clk_lookup * clk = msm8226_clock_init_data.table;

@@ -223,6 +223,7 @@ static inline void mmc_claim_host(struct mmc_host *host)
 extern u32 mmc_vddrange_to_ocrmask(int vdd_min, int vdd_max);
 
 extern int swap_sdcc;
+extern int mmc_zombie_mode;
 
 #endif /* __KERNEL__ */
 #endif /* LINUX_MMC_CORE_H */
