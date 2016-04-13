@@ -158,6 +158,11 @@ static inline unsigned long of_read_ulong(const __be32 *cell, int size)
 
 #define OF_BAD_ADDR	((u64)-1)
 
+static inline const char *of_node_full_name(const struct device_node *np)
+{
+	return np ? np->full_name : "<no-node>";
+}
+
 #ifndef of_node_to_nid
 static inline int of_node_to_nid(struct device_node *np) { return -1; }
 #define of_node_to_nid of_node_to_nid
@@ -260,6 +265,11 @@ extern void of_detach_node(struct device_node *);
 
 #define of_match_ptr(_ptr)	(_ptr)
 #else /* CONFIG_OF */
+
+static inline const char* of_node_full_name(const struct device_node *np)
+{
+	return "<no-node>";
+}
 
 static inline bool of_have_populated_dt(void)
 {
