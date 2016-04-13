@@ -48,6 +48,17 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/mmc.h>
 
+
+int swap_sdcc = 0;
+
+static int __init swap_sdcc_setup(char *str)
+{
+	get_option(&str, &swap_sdcc);
+	return 1;
+}
+__setup("androidboot.swap_sdcc=", swap_sdcc_setup);
+
+
 static void mmc_clk_scaling(struct mmc_host *host, bool from_wq);
 
 /* If the device is not responding */

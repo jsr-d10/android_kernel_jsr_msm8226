@@ -55,6 +55,8 @@
 #include <mach/rpm-regulator-smd.h>
 #include <mach/msm_smem.h>
 #include <linux/msm_thermal.h>
+#include <linux/mmc/host.h>
+
 #include "board-dt.h"
 #include "clock.h"
 #include "platsmp.h"
@@ -184,6 +186,26 @@ static struct of_dev_auxdata msm8226_auxdata_lookup[] __initdata = {
 	{}
 };
 
+static struct of_dev_auxdata msm8226_auxdata_lookup_swap[] __initdata = {
+	OF_DEV_AUXDATA("qcom,msm-sdcc", 0xF98A4000, \
+			"msm_sdcc.1", NULL),
+	OF_DEV_AUXDATA("qcom,msm-sdcc", 0xF9824000, \
+			"msm_sdcc.2", NULL),
+	OF_DEV_AUXDATA("qcom,msm-sdcc", 0xF9864000, \
+			"msm_sdcc.3", NULL),
+	OF_DEV_AUXDATA("qcom,sdhci-msm", 0xF98A4900, \
+			"msm_sdcc.1", NULL),
+	OF_DEV_AUXDATA("qcom,sdhci-msm", 0xF9824900, \
+			"msm_sdcc.2", NULL),
+	OF_DEV_AUXDATA("qcom,sdhci-msm", 0xF9864900, \
+			"msm_sdcc.3", NULL),
+	OF_DEV_AUXDATA("qcom,hsic-host", 0xF9A00000, "msm_hsic_host", NULL),
+	OF_DEV_AUXDATA("qcom,hsic-smsc-hub", 0, "msm_smsc_hub",
+			msm_hsic_host_adata),
+
+	{}
+};
+
 static struct reserve_info msm8226_reserve_info __initdata = {
 	.memtype_reserve_table = msm8226_reserve_table,
 	.paddr_to_memtype = msm8226_paddr_to_memtype,
@@ -253,6 +275,27 @@ void __init msm8226_init(void)
 	if (socinfo_init() < 0)
 		pr_err("%s: socinfo_init() failed\n", __func__);
 
+	if (swap_sdcc) {
+		int i;
+		struct clk_lookup * clk = msm8226_clock_init_data.table;
+		int clk_size = (int)msm8226_clock_init_data.size;
+
+		pr_info("%s: androidboot.swap_sdcc = %d \n", __func__, swap_sdcc);
+
+		adata = msm8226_auxdata_lookup_swap;
+		pr_info("%s: use struct msm8226_auxdata_lookup_swap \n", __func__);
+
+		for (i = 0; i < clk_size; i++) {
+			if (!clk[i].dev_id)
+				continue;
+			if (strcmp(clk[i].dev_id, "msm_sdcc.1") == 0) {
+				clk[i].dev_id = "msm_sdcc.2";
+			} else
+			if (strcmp(clk[i].dev_id, "msm_sdcc.2") == 0) {
+				clk[i].dev_id = "msm_sdcc.1";
+			}
+		}
+	}
 	msm8226_init_gpiomux();
 	board_dt_populate(adata);
 	msm8226_add_drivers();

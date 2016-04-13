@@ -1456,6 +1456,14 @@ static struct sdhci_msm_pltfm_data *sdhci_msm_populate_pdata(struct device *dev)
 	if (of_get_property(np, "qcom,nonremovable", NULL))
 		pdata->nonremovable = true;
 
+	if (swap_sdcc && strncmp(dev_name(dev), "msm_sdcc.", 9) == 0) {
+		const char * dname = dev_name(dev);
+		if (dname[9] == '1') {
+			pdata->nonremovable = true;
+			pr_info("%s: set nonremovable option for dev '%s' \n", __func__, dname);
+		}
+	}
+
 	if (!of_property_read_u32(np, "qcom,dat1-mpm-int",
 				  &mpm_int))
 		pdata->mpm_sdiowakeup_int = mpm_int;
@@ -2715,7 +2723,18 @@ static int __devinit sdhci_msm_probe(struct platform_device *pdev)
 	u32 pwr, irq_status, irq_ctl;
 	unsigned long flags;
 
-	pr_debug("%s: Enter %s\n", dev_name(&pdev->dev), __func__);
+	pr_info("%s: Enter %s\n", dev_name(&pdev->dev), __func__);
+	if (swap_sdcc == 2) {
+		const char * dname = dev_name(&pdev->dev);
+		if (strncmp(dname, "msm_sdcc.", 9) == 0) {
+			if (dname[9] == '2') {
+				pr_info("%s: Slot '%s' disabled (may be eMMC is dead) \n",
+					__func__, dname);
+				ret = -ENODEV;
+				goto out;
+			}
+		}
+	}	
 	msm_host = devm_kzalloc(&pdev->dev, sizeof(struct sdhci_msm_host),
 				GFP_KERNEL);
 	if (!msm_host) {
@@ -3115,7 +3134,7 @@ bus_clk_disable:
 pltfm_free:
 	sdhci_pltfm_free(pdev);
 out:
-	pr_debug("%s: Exit %s\n", dev_name(&pdev->dev), __func__);
+	pr_info("%s: Exit %s\n", dev_name(&pdev->dev), __func__);
 	return ret;
 }
 

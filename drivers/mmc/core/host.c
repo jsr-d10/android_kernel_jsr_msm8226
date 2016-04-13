@@ -434,6 +434,8 @@ struct mmc_host *mmc_alloc_host(int extra, struct device *dev)
 		goto free;
 
 	dev_set_name(&host->class_dev, "mmc%d", host->index);
+	pr_info("%s: device \"%s\" named as \"mmc%d\" \n",
+		__func__, dev_name(dev), host->index);
 
 	host->parent = dev;
 	host->class_dev.parent = dev;
