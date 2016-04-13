@@ -186,6 +186,26 @@ static struct of_dev_auxdata msm8226_auxdata_lookup[] __initdata = {
 	{}
 };
 
+static struct of_dev_auxdata msm8226_auxdata_lookup_swap[] __initdata = {
+	OF_DEV_AUXDATA("qcom,msm-sdcc", 0xF9824000, \
+			"msm_sdcc.2", NULL),
+	OF_DEV_AUXDATA("qcom,msm-sdcc", 0xF98A4000, \
+			"msm_sdcc.1", NULL),
+	OF_DEV_AUXDATA("qcom,msm-sdcc", 0xF9864000, \
+			"msm_sdcc.3", NULL),
+	OF_DEV_AUXDATA("qcom,sdhci-msm", 0xF9824900, \
+			"msm_sdcc.2", NULL),
+	OF_DEV_AUXDATA("qcom,sdhci-msm", 0xF98A4900, \
+			"msm_sdcc.1", NULL),
+	OF_DEV_AUXDATA("qcom,sdhci-msm", 0xF9864900, \
+			"msm_sdcc.3", NULL),
+	OF_DEV_AUXDATA("qcom,hsic-host", 0xF9A00000, "msm_hsic_host", NULL),
+	OF_DEV_AUXDATA("qcom,hsic-smsc-hub", 0, "msm_smsc_hub",
+			msm_hsic_host_adata),
+
+	{}
+};
+
 static struct reserve_info msm8226_reserve_info __initdata = {
 	.memtype_reserve_table = msm8226_reserve_table,
 	.paddr_to_memtype = msm8226_paddr_to_memtype,
@@ -248,8 +268,6 @@ void __init msm8226_add_drivers(void)
 	add_persistent_device();
 }
 
-static int sdcc_names_swaped = 0;
-
 void __init msm8226_init(void)
 {
 	struct of_dev_auxdata *adata = msm8226_auxdata_lookup;
@@ -257,23 +275,10 @@ void __init msm8226_init(void)
 	if (socinfo_init() < 0)
 		pr_err("%s: socinfo_init() failed\n", __func__);
 
-	if (swap_sdcc && !sdcc_names_swaped) {
-		do {
-			if (!adata->compatible) break;
-			if (adata->name) {
-				if (strlen(adata->name) != 10) continue;
-				if (strncmp(adata->name, "msm_sdcc.", 9)) continue;
-				if (adata->name[9] == '1')
-					adata->name[9] = '2';
-				if (adata->name[9] == '2')
-					adata->name[9] = '1';
-			}
-		} while (++adata);
-		sdcc_names_swaped = 1;
-		pr_info("%s: struct msm8226_auxdata_lookup changed (swap_sdcc) \n", __func__);
+	if (swap_sdcc) {
+		adata = msm8226_auxdata_lookup_swap;
+		pr_info("%s: use msm8226_auxdata_lookup_swap (swap_sdcc) \n", __func__);
 	}
-
-	adata = msm8226_auxdata_lookup;
 	msm8226_init_gpiomux();
 	board_dt_populate(adata);
 	msm8226_add_drivers();

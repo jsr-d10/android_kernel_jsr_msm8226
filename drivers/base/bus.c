@@ -17,9 +17,10 @@
 #include <linux/init.h>
 #include <linux/string.h>
 #include <linux/mutex.h>
+#include <linux/printk.h>
+#include <linux/of.h>
 #include "base.h"
 #include "power/power.h"
-#include <linux/printk.h>
 
 /* /sys/devices/system */
 /* FIXME: make static after drivers/base/sys.c is deleted */
@@ -308,14 +309,17 @@ int bus_for_each_dev(struct bus_type *bus, struct device *start,
 	if ((size_t)start == 1) {
 		start = NULL;
 		drv = (struct device_driver *)data;
-		if (drv->name && strcmp(drv->name, "sdhci_msm") == 0) {
-			msm_sdcc = 1;
+		if (drv->name) {
+			if (strcmp(drv->name, "msm_sdcc") == 0)
+				msm_sdcc = 1;
+			if (strcmp(drv->name, "sdhci_msm") == 0)
+				msm_sdcc = 2;
 			memset(msm_sdcc_items, 0, sizeof(msm_sdcc_items));
 		}
 	}
 
 	klist_iter_init_node(&bus->p->klist_devices, &i,
-					 (start ? &start->p->knode_bus : NULL));
+			     (start ? &start->p->knode_bus : NULL));
 	while ((dev = next_device(&i)) && !error) {
 		if (msm_sdcc && strncmp(dev_name(dev), "msm_sdcc.", 9) == 0) {
 			const char * dname = dev_name(dev);
@@ -324,7 +328,7 @@ int bus_for_each_dev(struct bus_type *bus, struct device *start,
 				msm_sdcc_items[num] = dev;
 		} else {
 			error = fn(dev, data);
-		}	
+		}
 	}
 	klist_iter_exit(&i);
 
@@ -333,7 +337,7 @@ int bus_for_each_dev(struct bus_type *bus, struct device *start,
 			dev = msm_sdcc_items[x];
 			if (dev) {
 				pr_info("%s: call dev probe for \"%s\" [%s] \n", __func__, 
-					dev_name(dev), dev->of_node ? dev->of_node->full_name : "???");
+					dev_name(dev), of_node_full_name(dev->of_node));
 				fn(dev, data);
 			}
 		}
