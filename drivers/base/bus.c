@@ -326,6 +326,7 @@ int bus_for_each_dev(struct bus_type *bus, struct device *start,
 			size_t num = (size_t)dname[9] - '0';
 			if (num < MSM_SDCC_ITEM_MAX)
 				msm_sdcc_items[num] = dev;
+			pr_info("%s: add dev '%s' \n", __func__, dname);
 		} else {
 			error = fn(dev, data);
 		}
