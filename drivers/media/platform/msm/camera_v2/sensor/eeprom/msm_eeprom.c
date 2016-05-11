@@ -796,7 +796,7 @@ static int32_t msm_eeprom_platform_probe(struct platform_device *pdev)
 	struct device_node *of_node = pdev->dev.of_node;
 	struct msm_camera_power_ctrl_t *power_info = NULL;
 
-	CDBG("%s E\n", __func__);
+	pr_info("%s: Enter [%s] \n", __func__, dev_name(&pdev->dev));
 
 	e_ctrl = kzalloc(sizeof(struct msm_eeprom_ctrl_t), GFP_KERNEL);
 	if (!e_ctrl) {
@@ -903,7 +903,7 @@ static int32_t msm_eeprom_platform_probe(struct platform_device *pdev)
 		pr_err("%s read_eeprom_memory failed\n", __func__);
 		goto power_down;
 	}
-		pr_err("%s line %d\n", __func__, __LINE__);
+
 	for (j = 0; j < e_ctrl->num_bytes; j++)
 		CDBG("memory_data[%d] = 0x%X\n", j, e_ctrl->memory_data[j]);
 
@@ -928,7 +928,7 @@ static int32_t msm_eeprom_platform_probe(struct platform_device *pdev)
 
 
 	e_ctrl->is_supported = 1;
-	CDBG("%s X\n", __func__);
+	pr_info("%s: Exit [%s] OK \n", __func__, dev_name(&pdev->dev));
 	return rc;
 
 power_down:
@@ -942,6 +942,7 @@ board_free:
 cciclient_free:
 	kfree(e_ctrl->i2c_client.cci_client);
 	kfree(e_ctrl);
+	pr_err("%s: Exit [%s] err = %d \n", __func__, dev_name(&pdev->dev), rc);
 	return rc;
 }
 
