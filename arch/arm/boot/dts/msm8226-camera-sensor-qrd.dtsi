@@ -344,6 +344,7 @@
 		qcom,gpio-no-mux = <0>;
 		gpios = <&msmgpio 26 0>, 
 			<&msmgpio 28 0>, 
+			<&msmgpio 35 0>,
 			<&msmgpio 0 0>, 
 			<&msmgpio 1 0>, 
 			<&msmgpio 22 0>;
@@ -358,7 +359,7 @@
 		qcom,cam-power-seq-type = "sensor_gpio", "sensor_gpio", "sensor_gpio", "sensor_gpio", "sensor_gpio", "sensor_clk";
 		qcom,cam-power-seq-val = "sensor_gpio_vio", "sensor_gpio_vana", "sensor_gpio_vdig", "sensor_gpio_reset", "sensor_gpio_standby", "sensor_cam_mclk";
 		qcom,cam-power-seq-cfg-val = <1 1 1 1 1 24000000>;
-		qcom,cam-power-seq-delay = <5 5 10 20 20 30>;
+		qcom,cam-power-seq-delay = <1 1 10 10 10 5>;
 	};
 
 	qcom,camera@6d {
