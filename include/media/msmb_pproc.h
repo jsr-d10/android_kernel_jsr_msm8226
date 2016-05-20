@@ -13,8 +13,7 @@
 
 #define MAX_NUM_CPP_STRIPS 8
 #define MSM_CPP_MAX_NUM_PLANES 3
-#define MSM_CPP_MIN_FRAME_LENGTH 13
-#define MSM_CPP_MAX_FRAME_LENGTH 2048
+#define MSM_CPP_MAX_FRAME_LENGTH 1024
 #define MSM_CPP_MAX_FW_NAME_LEN 32
 
 enum msm_cpp_frame_type {
@@ -91,7 +90,6 @@ struct msm_cpp_buffer_info_t {
 	uint32_t offset;
 	uint8_t native_buff;
 	uint8_t processed_divert;
-	uint32_t identity;
 };
 
 struct msm_cpp_stream_buff_info_t {

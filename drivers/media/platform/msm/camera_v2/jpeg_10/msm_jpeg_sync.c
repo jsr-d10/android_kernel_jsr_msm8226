@@ -669,8 +669,6 @@ int msm_jpeg_ioctl_hw_cmd(struct msm_jpeg_device *pgmn_dev,
 			JPEG_PR_ERR("%s:%d] failed\n", __func__, __LINE__);
 			return -EFAULT;
 		}
-	} else {
-		return is_copy_to_user;
 	}
 
 	return 0;
@@ -876,7 +874,7 @@ long __msm_jpeg_ioctl(struct msm_jpeg_device *pgmn_dev,
 		break;
 
 	default:
-		JPEG_PR_ERR(KERN_INFO "%s:%d] cmd = 0x%x not supported\n",
+		JPEG_PR_ERR(KERN_INFO "%s:%d] cmd = %d not supported\n",
 			__func__, __LINE__, _IOC_NR(cmd));
 		rc = -EINVAL;
 		break;

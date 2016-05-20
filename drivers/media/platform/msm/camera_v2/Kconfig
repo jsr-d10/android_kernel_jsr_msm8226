@@ -258,7 +258,3 @@ config T4K37AB
 	bool "Toshiba T4K37AB (BAYER 13MP)"
 	depends on MSMB_CAMERA
 
-config JSR_CAMERA_VENDOR
-	bool "Detect CAMERA VENDOR"
-	depends on MSMB_CAMERA
-

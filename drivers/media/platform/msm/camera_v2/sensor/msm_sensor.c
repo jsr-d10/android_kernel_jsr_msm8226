@@ -27,30 +27,6 @@
 #define CDBG(fmt, args...) do { } while (0)
 #endif
 
-#ifdef CONFIG_JSR_CAMERA_VENDOR
-int camera_rear_id = 0;
-int camera_front_id = 0;
-
-const char * get_camera_model_by_id(int camid)
-{
-	switch (camid) {
-	case CAMERA_VENDOR_T4K37AB:
-		return "Toshiba_Qtech_t4k37ab\n";
-	case CAMERA_VENDOR_IMX135:
-		return "Sony_Liteon_imx135\n";
-	case CAMERA_VENDOR_OV13850:
-		return "OmniVision_Truly_ov13850\n";
-	case CAMERA_VENDOR_OV5648:
-		return "OmniVision_Truly_ov5648\n";
-	case CAMERA_VENDOR_OV2720:
-		return "OmniVision_Truly_ov2720\n";
-	case CAMERA_VENDOR_TCM9516:
-		return "Toshiba_TCM9516\n";
-	}
-	return "Unknown camera model\n";
-}
-#endif
-
 static int32_t msm_sensor_enable_i2c_mux(struct msm_camera_i2c_conf *i2c_conf)
 {
 	struct v4l2_subdev *i2c_mux_sd =
@@ -283,13 +259,13 @@ static int32_t msm_sensor_get_dt_vreg_data(struct device_node *of_node,
 	struct msm_camera_sensor_board_info *sensordata)
 {
 	int32_t rc = 0, i = 0;
-	int32_t count = 0;
+	uint32_t count = 0;
 	uint32_t *vreg_array = NULL;
 
 	count = of_property_count_strings(of_node, "qcom,cam-vreg-name");
 	CDBG("%s qcom,cam-vreg-name count %d\n", __func__, count);
 
-	if (count <= 0)
+	if (!count)
 		return 0;
 
 	sensordata->cam_vreg = kzalloc(sizeof(struct camera_vreg_t) * count,
@@ -991,7 +967,6 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	struct msm_sensor_power_setting_array *power_setting_array = NULL;
 	struct msm_sensor_power_setting *power_setting = NULL;
 	struct msm_camera_sensor_board_info *data = s_ctrl->sensordata;
-	uint32_t retry = 0;
 	s_ctrl->stop_setting_valid = 0;
 
 	CDBG("%s:%d\n", __func__, __LINE__);
@@ -1093,22 +1068,13 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 		}
 	}
 
-	for (retry = 0; retry < 3; retry++)
-	{
 	if (s_ctrl->func_tbl->sensor_match_id)
 		rc = s_ctrl->func_tbl->sensor_match_id(s_ctrl);
 	else
 		rc = msm_sensor_match_id(s_ctrl);
 	if (rc < 0) {
-			if (retry < 2) {
-				continue;
-			} else {
 		pr_err("%s:%d match id failed rc %d\n", __func__, __LINE__, rc);
 		goto power_up_failed;
-	}
-		} else {
-			break;
-		}
 	}
 
 	CDBG("%s exit\n", __func__);
@@ -1242,10 +1208,6 @@ int32_t msm_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 
 int32_t msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 {
-#ifdef CONFIG_JSR_CAMERA_VENDOR
-	int camid = CAMERA_VENDOR_UNKNOWN;
-	const char * cam_name;
-#endif
 	int32_t rc = 0;
 	uint16_t chipid = 0;
 	rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(
@@ -1260,34 +1222,6 @@ int32_t msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 
 	CDBG("%s: read id: %x expected id %x:\n", __func__, chipid,
 		s_ctrl->sensordata->slave_info->sensor_id);
-
-#ifdef CONFIG_JSR_CAMERA_VENDOR
-	switch (chipid) {
-	case 0x1C21:
-		camid = camera_rear_id = CAMERA_VENDOR_T4K37AB;
-		break;
-	case 0x0135:
-		camid = camera_rear_id = CAMERA_VENDOR_IMX135;
-		break;
-	case 0xD850:
-		camid = camera_rear_id = CAMERA_VENDOR_OV13850;
-		break;
-	case 0x5648:
-		camid = camera_front_id = CAMERA_VENDOR_OV5648;
-		break;
-	case 0x2720:
-		camid = camera_front_id = CAMERA_VENDOR_OV2720;
-		break;
-	case 0x1000:
-		camid = camera_front_id = CAMERA_VENDOR_TCM9516;
-		break;
-	}
-
-	cam_name = get_camera_model_by_id(camid);
-	pr_info("%s: chip id = %x (exp id = %x) name = %s \n", __func__,
-		chipid, s_ctrl->sensordata->slave_info->sensor_id, cam_name);
-#endif
-
 	if (chipid != s_ctrl->sensordata->slave_info->sensor_id) {
 		pr_err("msm_sensor_match_id chip id doesnot match\n");
 		return -ENODEV;

@@ -35,21 +35,6 @@
 #define DEFINE_MSM_MUTEX(mutexname) \
 	static struct mutex mutexname = __MUTEX_INITIALIZER(mutexname)
 
-#ifdef CONFIG_JSR_CAMERA_VENDOR
-#define CAMERA_VENDOR_UNKNOWN      0
-#define CAMERA_VENDOR_T4K37AB      1
-#define CAMERA_VENDOR_IMX135       2
-#define CAMERA_VENDOR_OV13850      3
-#define CAMERA_VENDOR_OV5648       11
-#define CAMERA_VENDOR_OV2720       12
-#define CAMERA_VENDOR_TCM9516      13
-
-extern int camera_rear_id;
-extern int camera_front_id;
-
-const char * get_camera_model_by_id(int camid);
-#endif
-
 struct msm_sensor_ctrl_t;
 
 enum msm_sensor_state_t {

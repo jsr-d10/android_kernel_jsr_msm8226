@@ -48,12 +48,6 @@
 
 #define MAX_AF_ITERATIONS 3
 
-enum flash_type {
-	LED_FLASH = 1,
-	STROBE_FLASH,
-	GPIO_FLASH
-};
-
 enum msm_camera_i2c_reg_addr_type {
 	MSM_CAMERA_I2C_BYTE_ADDR = 1,
 	MSM_CAMERA_I2C_WORD_ADDR,
@@ -569,13 +563,8 @@ enum msm_camera_led_config_t {
 	MSM_CAMERA_LED_RELEASE,
 };
 
-struct msm_camera_led_cfg_04_t {
-	enum msm_camera_led_config_t cfgtype;
-};
-
 struct msm_camera_led_cfg_t {
 	enum msm_camera_led_config_t cfgtype;
-	uint32_t led_current;
 };
 
 #define VIDIOC_MSM_SENSOR_CFG \
@@ -598,11 +587,6 @@ struct msm_camera_led_cfg_t {
 
 #define VIDIOC_MSM_FLASH_LED_DATA_CFG \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 7, struct msm_camera_led_cfg_t)
-
-#define VIDIOC_MSM_FLASH_LED_DATA_CFG_08  VIDIOC_MSM_FLASH_LED_DATA_CFG
-
-#define VIDIOC_MSM_FLASH_LED_DATA_CFG_04 \
-	_IOWR('V', BASE_VIDIOC_PRIVATE + 7, struct msm_camera_led_cfg_04_t)
 
 #define VIDIOC_MSM_EEPROM_CFG \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 8, struct msm_eeprom_cfg_data)
