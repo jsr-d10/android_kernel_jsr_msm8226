@@ -35,19 +35,19 @@ const char * get_camera_model_by_id(int camid)
 {
 	switch (camid) {
 	case CAMERA_VENDOR_T4K37AB:
-		return "Toshiba_Qtech_t4k37ab";
+		return "Toshiba_Qtech_t4k37ab\n";
 	case CAMERA_VENDOR_IMX135:
-		return "Sony_Liteon_imx135";
+		return "Sony_Liteon_imx135\n";
 	case CAMERA_VENDOR_OV13850:
-		return "OmniVision_Truly_ov13850";
+		return "OmniVision_Truly_ov13850\n";
 	case CAMERA_VENDOR_OV5648:
-		return "OmniVision_Truly_ov5648";
+		return "OmniVision_Truly_ov5648\n";
 	case CAMERA_VENDOR_OV2720:
-		return "OmniVision_Truly_ov2720";
+		return "OmniVision_Truly_ov2720\n";
 	case CAMERA_VENDOR_TCM9516:
-		return "Toshiba_TCM9516";
+		return "Toshiba_TCM9516\n";
 	}
-	return NULL;
+	return "Unknown camera model\n";
 }
 #endif
 
@@ -991,6 +991,7 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	struct msm_sensor_power_setting_array *power_setting_array = NULL;
 	struct msm_sensor_power_setting *power_setting = NULL;
 	struct msm_camera_sensor_board_info *data = s_ctrl->sensordata;
+	uint32_t retry = 0;
 	s_ctrl->stop_setting_valid = 0;
 
 	CDBG("%s:%d\n", __func__, __LINE__);
@@ -1092,13 +1093,22 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 		}
 	}
 
+	for (retry = 0; retry < 3; retry++)
+	{
 	if (s_ctrl->func_tbl->sensor_match_id)
 		rc = s_ctrl->func_tbl->sensor_match_id(s_ctrl);
 	else
 		rc = msm_sensor_match_id(s_ctrl);
 	if (rc < 0) {
+			if (retry < 2) {
+				continue;
+			} else {
 		pr_err("%s:%d match id failed rc %d\n", __func__, __LINE__, rc);
 		goto power_up_failed;
+	}
+		} else {
+			break;
+		}
 	}
 
 	CDBG("%s exit\n", __func__);
@@ -1230,7 +1240,7 @@ int32_t msm_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 	return 0;
 }
 
-inline int msm_sensor_match_id_try(struct msm_sensor_ctrl_t *s_ctrl, int t)
+int32_t msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 {
 #ifdef CONFIG_JSR_CAMERA_VENDOR
 	int camid = CAMERA_VENDOR_UNKNOWN;
@@ -1243,8 +1253,8 @@ inline int msm_sensor_match_id_try(struct msm_sensor_ctrl_t *s_ctrl, int t)
 			s_ctrl->sensordata->slave_info->sensor_id_reg_addr,
 			&chipid, MSM_CAMERA_I2C_WORD_DATA);
 	if (rc < 0) {
-		if (t == 0)
-			pr_err("%s: %s: read id failed\n", __func__, s_ctrl->sensordata->sensor_name);
+		pr_err("%s: %s: read id failed\n", __func__,
+			s_ctrl->sensordata->sensor_name);
 		return rc;
 	}
 
@@ -1274,29 +1284,13 @@ inline int msm_sensor_match_id_try(struct msm_sensor_ctrl_t *s_ctrl, int t)
 	}
 
 	cam_name = get_camera_model_by_id(camid);
-	if (chipid == s_ctrl->sensordata->slave_info->sensor_id) {
-		pr_info("%s: chip id = %x => name = %s \n", __func__, chipid, cam_name);
-	}
+	pr_info("%s: chip id = %x (exp id = %x) name = %s \n", __func__,
+		chipid, s_ctrl->sensordata->slave_info->sensor_id, cam_name);
 #endif
 
 	if (chipid != s_ctrl->sensordata->slave_info->sensor_id) {
-		if (t == 0)
-			pr_err("%s: chip id (%x) doesnot match (exp id = %x)\n", __func__,
-				chipid, s_ctrl->sensordata->slave_info->sensor_id);
+		pr_err("msm_sensor_match_id chip id doesnot match\n");
 		return -ENODEV;
-	}
-	return rc;
-}
-
-int32_t msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
-{
-	int rc = 0;
-	int retry = 3;
-
-	while (retry--)	{
-		rc = msm_sensor_match_id_try(s_ctrl, retry);
-		if (rc >= 0)
-			break;
 	}
 	return rc;
 }
