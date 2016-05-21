@@ -490,7 +490,6 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 	int camid = CAMERA_VENDOR_UNKNOWN;
 	const char * cam_name;
 #endif
-	int32_t index = 0;
 	int rc = 0;
 	uint16_t chipid = 0;
 	struct msm_camera_i2c_client *sensor_i2c_client;
