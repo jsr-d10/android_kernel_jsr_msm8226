@@ -752,6 +752,7 @@ int msm_camera_init_gpio_pin_tbl(struct device_node *of_node,
 		}
 		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VANA] =
 			gpio_array[val];
+		gconf->gpio_num_info->valid[SENSOR_GPIO_VANA] = 1;
 		CDBG("%s qcom,gpio-vana %d\n", __func__,
 			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VANA]);
 	}
@@ -769,6 +770,7 @@ int msm_camera_init_gpio_pin_tbl(struct device_node *of_node,
 		}
 		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VIO] =
 			gpio_array[val];
+		gconf->gpio_num_info->valid[SENSOR_GPIO_VIO] = 1;
 		CDBG("%s qcom,gpio-vio %d\n", __func__,
 			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VIO]);
 	}
