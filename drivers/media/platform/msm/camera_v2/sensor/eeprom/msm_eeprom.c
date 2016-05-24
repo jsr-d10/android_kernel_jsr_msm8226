@@ -19,7 +19,7 @@
 #include "msm_eeprom.h"
 
 #undef CDBG
-#ifdef MSM_EEPROM_DEBUG
+#ifdef CONFIG_MSM_EEPROM_DEBUG
 #define CDBG(fmt, args...) pr_err(fmt, ##args)
 #else
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
@@ -916,7 +916,7 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 	struct device_node *of_node = pdev->dev.of_node;
 	struct msm_camera_power_ctrl_t *power_info = NULL;
 
-	CDBG("%s E\n", __func__);
+	pr_info("%s: Enter [%s] \n", __func__, dev_name(&pdev->dev));
 
 	e_ctrl = kzalloc(sizeof(*e_ctrl), GFP_KERNEL);
 	if (!e_ctrl) {
@@ -1053,7 +1053,7 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 	msm_sd_register(&e_ctrl->msm_sd);
 
 	e_ctrl->is_supported = (e_ctrl->is_supported << 1) | 1;
-	CDBG("%s X\n", __func__);
+	pr_info("%s: Exit [%s] OK \n", __func__, dev_name(&pdev->dev));
 	return rc;
 
 power_down:
@@ -1067,6 +1067,7 @@ board_free:
 cciclient_free:
 	kfree(e_ctrl->i2c_client.cci_client);
 	kfree(e_ctrl);
+	pr_err("%s: Exit [%s] err = %d \n", __func__, dev_name(&pdev->dev), rc);
 	return rc;
 }
 

@@ -36,19 +36,19 @@ const char * get_camera_model_by_id(int camid)
 {
 	switch (camid) {
 	case CAMERA_VENDOR_T4K37AB:
-		return "Toshiba_Qtech_t4k37ab\n";
+		return "Toshiba_Qtech_t4k37ab";
 	case CAMERA_VENDOR_IMX135:
-		return "Sony_Liteon_imx135\n";
+		return "Sony_Liteon_imx135";
 	case CAMERA_VENDOR_OV13850:
-		return "OmniVision_Truly_ov13850\n";
+		return "OmniVision_Truly_ov13850";
 	case CAMERA_VENDOR_OV5648:
-		return "OmniVision_Truly_ov5648\n";
+		return "OmniVision_Truly_ov5648";
 	case CAMERA_VENDOR_OV2720:
-		return "OmniVision_Truly_ov2720\n";
+		return "OmniVision_Truly_ov2720";
 	case CAMERA_VENDOR_TCM9516:
-		return "Toshiba_TCM9516\n";
+		return "Toshiba_TCM9516";
 	}
-	return "Unknown camera model\n";
+	return NULL;
 }
 #endif
 
@@ -546,12 +546,14 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 	}
 
 	cam_name = get_camera_model_by_id(camid);
-	pr_info("%s: chip id = %x (exp id = %x) name = %s \n", __func__,
-		chipid, slave_info->sensor_id, cam_name);
+	if (chipid == slave_info->sensor_id) {
+		pr_info("%s: chip id = %x => name = %s \n", __func__, chipid, cam_name);
+	}
 #endif
 
 	if (chipid != slave_info->sensor_id) {
-		pr_err("msm_sensor_match_id chip id doesnot match\n");
+		pr_err("%s: chip id (%x) doesnot match (exp id = %x)\n", __func__,
+				chipid, slave_info->sensor_id);
 		return -ENODEV;
 	}
 	return rc;
