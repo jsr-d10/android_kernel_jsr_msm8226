@@ -217,6 +217,10 @@ config MSM_V4L2_VIDEO_OVERLAY_DEVICE
 	  apps to render overlaid video using Video4Linux2
 	  APIs, by using /dev/videoX device
 
+config MSM_CAMERA_MULTI_SOF
+	bool "Add support for multiple SOF events"
+	depends on MSMB_CAMERA
+
 config MSMB_JPEG
 	tristate "Qualcomm MSM Jpeg Encoder Engine support"
 	depends on MSMB_CAMERA && (ARCH_MSM8974 || ARCH_MSM8226)

@@ -185,8 +185,16 @@ static void msm_vfe32_process_camif_irq(struct vfe_device *vfe_dev,
 	if (irq_status0 & BIT(0)) {
 		ISP_DBG("%s: SOF IRQ\n", __func__);
 		cnt = vfe_dev->axi_data.src_info[VFE_PIX_0].raw_stream_count;
+#ifndef CONFIG_MSM_CAMERA_MULTI_SOF
+		if (vfe_dev->axi_data.src_info[VFE_PIX_0].pix_stream_count)
+			cnt = 0;
+#endif
 		if (cnt > 0) {
+#ifndef CONFIG_MSM_CAMERA_MULTI_SOF
+			msm_isp_sof_notify(vfe_dev, VFE_PIX_0, ts);
+#else
 			msm_isp_sof_notify(vfe_dev, VFE_RAW_0, ts);
+#endif
 			if (vfe_dev->axi_data.stream_update)
 				msm_isp_axi_stream_update(vfe_dev);
 			msm_isp_update_framedrop_reg(vfe_dev);
