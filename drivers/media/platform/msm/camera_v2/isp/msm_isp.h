@@ -350,7 +350,9 @@ struct msm_vfe_axi_shared_data {
 	struct msm_vfe_src_info src_info[VFE_SRC_MAX];
 	uint16_t stream_handle_cnt;
 	unsigned long event_mask;
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	uint32_t burst_len;
+#endif
 };
 
 struct msm_vfe_stats_hardware_info {
@@ -393,7 +395,9 @@ struct msm_vfe_stats_shared_data {
 	uint16_t stream_handle_cnt;
 	atomic_t stats_update;
 	uint32_t stats_mask;
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	uint32_t stats_burst_len;
+#endif
 };
 
 struct msm_vfe_tasklet_queue_cmd {
@@ -492,7 +496,9 @@ struct vfe_device {
 	uint8_t vt_enable;
 	uint8_t ignore_error;
 	struct msm_isp_statistics *stats;
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	uint32_t vfe_ub_size;
+#endif
 };
 
 #endif

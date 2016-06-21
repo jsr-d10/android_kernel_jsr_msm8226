@@ -748,6 +748,7 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 		}
 		break;
 	}
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	case SET_WM_UB_SIZE: {
 	  	  if (cmd_len < sizeof(uint32_t)) {
 			pr_err("%s:%d failed: invalid cmd len %u exp %zu\n",
@@ -758,6 +759,7 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 		vfe_dev->vfe_ub_size = *cfg_data;
 		break;
 	}
+#endif
 	}
 	return 0;
 }

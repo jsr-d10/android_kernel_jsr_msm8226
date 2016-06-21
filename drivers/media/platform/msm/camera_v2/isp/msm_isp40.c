@@ -37,8 +37,15 @@
 #define VFE40_8x26V2_VERSION 0x20010014
 
 
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 /* STATS_SIZE (BE + BG + BF+ RS + CS + IHIST + BHIST ) = 392 */
 #define VFE40_STATS_SIZE 392
+#else
+#define VFE40_BURST_LEN 1
+#define VFE40_STATS_BURST_LEN 1
+#define VFE40_UB_SIZE 1536
+#define VFE40_EQUAL_SLICE_UB 228
+#endif
 
 #define VFE40_WM_BASE(idx) (0x6C + 0x24 * idx)
 #define VFE40_RDI_BASE(idx) (0x2E8 + 0x4 * idx)
@@ -985,9 +992,13 @@ static void msm_vfe40_axi_cfg_wm_reg(
 {
 	uint32_t val;
 
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	struct msm_vfe_axi_shared_data *axi_data =
 		&vfe_dev->axi_data;
 	uint32_t burst_len = axi_data->burst_len;
+#else
+	uint32_t burst_len = VFE40_BURST_LEN;
+#endif
 
 	uint32_t wm_base = VFE40_WM_BASE(stream_info->wm[plane_idx]);
 
@@ -1143,7 +1154,11 @@ static void msm_vfe40_cfg_axi_ub_equal_default(
 			total_image_size += axi_data->wm_image_size[i];
 		}
 	}
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	axi_wm_ub = vfe_dev->vfe_ub_size - VFE40_STATS_SIZE;
+#else
+	axi_wm_ub = MSM_ISP40_TOTAL_WM_UB;
+#endif
 
 	prop_size = axi_wm_ub -
 		axi_data->hw_info->min_wm_ub * num_used_wms;
@@ -1170,9 +1185,13 @@ static void msm_vfe40_cfg_axi_ub_equal_slicing(
 	int i;
 	uint32_t ub_offset = 0;
 	struct msm_vfe_axi_shared_data *axi_data = &vfe_dev->axi_data;
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	uint32_t axi_equal_slice_ub =
 		(vfe_dev->vfe_ub_size - VFE40_STATS_SIZE)/
 			(axi_data->hw_info->num_wm - 1);
+#else
+	uint32_t axi_equal_slice_ub = VFE40_EQUAL_SLICE_UB;
+#endif
 
 	for (i = 0; i < axi_data->hw_info->num_wm; i++) {
 		msm_camera_io_w(ub_offset << 16 | (axi_equal_slice_ub - 1),
@@ -1367,9 +1386,14 @@ static void msm_vfe40_stats_clear_wm_reg(
 static void msm_vfe40_stats_cfg_ub(struct vfe_device *vfe_dev)
 {
 	int i;
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	struct msm_vfe_stats_shared_data *stats_data = &vfe_dev->stats_data;
 	uint32_t ub_offset = vfe_dev->vfe_ub_size;
 	uint32_t stats_burst_len = stats_data->stats_burst_len;
+#else
+	uint32_t ub_offset = VFE40_UB_SIZE;
+	uint32_t stats_burst_len = VFE40_STATS_BURST_LEN;
+#endif
 
 
 	uint32_t ub_size[VFE40_NUM_STATS_TYPE] = {

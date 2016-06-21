@@ -589,7 +589,7 @@ int msm_isp_request_axi_stream(struct vfe_device *vfe_dev, void *arg)
 	struct msm_vfe_axi_shared_data *axi_data = &vfe_dev->axi_data;
 
 	rc = msm_isp_axi_create_stream(
-		&vfe_dev->axi_data, stream_cfg_cmd);
+		axi_data, stream_cfg_cmd);
 	if (rc) {
 		pr_err("%s: create stream failed\n", __func__);
 		return rc;
@@ -641,7 +641,9 @@ int msm_isp_request_axi_stream(struct vfe_device *vfe_dev, void *arg)
 		vfe_dev->vt_enable = stream_cfg_cmd->vt_enable;
 		msm_isp_start_avtimer();
 	}
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	axi_data->burst_len = stream_cfg_cmd->burst_len;
+#endif
 	if (stream_info->num_planes > 1) {
 		msm_isp_axi_reserve_comp_mask(
 			&vfe_dev->axi_data, stream_info);

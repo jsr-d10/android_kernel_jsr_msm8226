@@ -490,8 +490,10 @@ int msm_isp_cfg_stats_stream(struct vfe_device *vfe_dev, void *arg)
 {
 	int rc = 0;
 	struct msm_vfe_stats_stream_cfg_cmd *stream_cfg_cmd = arg;
+#ifdef CONFIG_MSM_CAMERA_WM_UB_SIZE
 	struct msm_vfe_stats_shared_data *stats_data = &vfe_dev->stats_data;
 	stats_data->stats_burst_len =  stream_cfg_cmd->stats_burst_len;
+#endif
 
 	if (vfe_dev->stats_data.num_active_stream == 0)
 		vfe_dev->hw_info->vfe_ops.stats_ops.cfg_ub(vfe_dev);
