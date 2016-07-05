@@ -294,6 +294,11 @@ static u32 log_next(u32 idx)
 #define LOG_ALIGN 8
 #endif
 
+#ifdef CONFIG_LLCON
+static char llcon_buf[LOG_LINE_MAX * 4];
+static int syslog_print_line(u32 idx, char *text, size_t size);
+#endif
+
 /* insert record into the buffer, discard old ones, update heads */
 static void log_store(int facility, int level,
 			const char *dict, u16 dict_len,
@@ -343,6 +348,14 @@ static void log_store(int facility, int level,
 	msg->ts_nsec = local_clock();
 	memset(log_dict(msg) + dict_len, 0, pad_len);
 	msg->len = sizeof(struct log) + text_len + dict_len + pad_len;
+
+#ifdef CONFIG_LLCON
+	if (llcon_enabled) {
+		int mlen;
+		mlen = syslog_print_line(log_next_idx, llcon_buf, sizeof(llcon_buf)-4);
+		llcon_emit_log_line(llcon_buf, mlen);
+	}
+#endif
 
 	/* insert message */
 	log_next_idx += msg->len;

@@ -285,6 +285,25 @@ void llcon_emit(char c)
 	}
 }
 
+void llcon_emit_line(char * line, int size)
+{
+	int i;
+	if (line && size > 0) {
+		switch (llcon.mode) {
+		case LLCON_MODE_SYNC:
+			for (i = 0; i < size; i++) {
+				llcon_putc(line[i]);
+			}
+			break;
+		case LLCON_MODE_ASYNC:
+			for (i = 0; i < size; i++) {
+				llcon_putc_to_buf(line[i]);
+			}
+			break;
+		}
+	}
+}
+
 void llcon_set_cursor_pos(size_t x, size_t y)
 {
 	llcon.cur.x = x;
