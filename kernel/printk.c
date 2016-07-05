@@ -221,6 +221,7 @@ static DEFINE_RAW_SPINLOCK(logbuf_lock);
 /* cpu currently holding logbuf_lock */
 static volatile unsigned int logbuf_cpu = UINT_MAX;
 
+#define PREFIX_MAX   32
 #define LOG_LINE_MAX 1024
 
 /* record buffer */
@@ -1776,8 +1777,8 @@ void console_unlock(void)
 again:
 	for (;;) {
 		struct log *msg;
-		static char text[LOG_LINE_MAX];
-		size_t len;
+		static char text[LOG_LINE_MAX + PREFIX_MAX];
+		int len;
 		int level;
 		raw_spin_lock_irqsave(&logbuf_lock, flags);
 		if (seen_seq != log_next_seq) {
@@ -1796,11 +1797,9 @@ again:
 
 		msg = log_from_idx(console_idx);
 		level = msg->level & 7;
-		len = msg->text_len;
-		if (len+1 >= sizeof(text))
-			len = sizeof(text)-1;
-		memcpy(text, log_text(msg), len);
-		text[len++] = '\n';
+		len = syslog_print_line(console_idx, text, sizeof(text));
+		if (len < 0)
+			len = 0;
 
 		console_idx = log_next(console_idx);
 		console_seq++;
