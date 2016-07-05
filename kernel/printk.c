@@ -209,6 +209,7 @@ struct log {
 	u16 text_len;           /* length of text buffer */
 	u16 dict_len;           /* length of dictionary buffer */
 	u16 level;              /* syslog level + facility */
+	u32 cpuid;
 };
 
 /*
@@ -346,6 +347,7 @@ static void log_store(int facility, int level,
 	msg->dict_len = dict_len;
 	msg->level = (facility << 3) | (level & 7);
 	msg->ts_nsec = local_clock();
+	msg->cpuid = logbuf_cpu;
 	memset(log_dict(msg) + dict_len, 0, pad_len);
 	msg->len = sizeof(struct log) + text_len + dict_len + pad_len;
 
@@ -823,7 +825,7 @@ static int syslog_print_line(u32 idx, char *text, size_t size)
 			len++;
 
 		if (printk_time)
-			len += 15;
+			len += 18;
 
 		len += msg->text_len;
 		len++;
@@ -836,8 +838,8 @@ static int syslog_print_line(u32 idx, char *text, size_t size)
 		unsigned long long t = msg->ts_nsec;
 		unsigned long rem_ns = do_div(t, 1000000000);
 
-		len += sprintf(text + len, "[%5lu.%06lu] ",
-			(unsigned long) t, rem_ns / 1000);
+		len += sprintf(text + len, "[%5lu.%06lu,%2d] ",
+			(unsigned long) t, rem_ns / 1000, (int)msg->cpuid);
 	}
 
 	if (len + msg->text_len > size)
