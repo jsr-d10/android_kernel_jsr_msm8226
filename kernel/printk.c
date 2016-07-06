@@ -810,6 +810,19 @@ static bool printk_time;
 #endif
 module_param_named(time, printk_time, bool, S_IRUGO | S_IWUSR);
 
+static int get_prefix_len(int level)
+{
+	int len = 3;       /* "<3>" */
+
+	if (level > 9)     /* "<33>" */
+		len++;
+	if (level > 99)    /* "<333>" */
+		len++;
+	if (printk_time)   /* "[12345.123456, 1] " */
+		len += 18;
+	return len;
+}
+
 static int syslog_print_line(u32 idx, char *text, size_t size)
 {
 	struct log *msg;
@@ -818,16 +831,7 @@ static int syslog_print_line(u32 idx, char *text, size_t size)
 	msg = log_from_idx(idx);
 	if (!text) {
 		/* calculate length only */
-		len = 3;
-
-		if (msg->level > 9)
-			len++;
-		if (msg->level > 99)
-			len++;
-
-		if (printk_time)
-			len += 18;
-
+		len = get_prefix_len(msg->level);
 		len += msg->text_len;
 		len++;
 		return len;
@@ -1254,6 +1258,7 @@ asmlinkage int vprintk_emit(int facility, int level,
 	static char buf[LOG_LINE_MAX];
 	static size_t buflen;
 	static int buflevel;
+	static char tmpbuf[LOG_LINE_MAX];
 	static char textbuf[LOG_LINE_MAX];
 	char *text = textbuf;
 	size_t textlen;
@@ -1329,6 +1334,38 @@ asmlinkage int vprintk_emit(int facility, int level,
 			text += 3;
 			textlen -= 3;
 			break;
+		}
+	}
+
+	if (textlen > 0 && strchr(text, '\n')) {
+		int plen = get_prefix_len((facility << 3) | (buflevel & 7));
+		if (plen > 0) {
+			int i, n = 0, t = 0, k = 0;
+			char * prev = tmpbuf;
+			memcpy(tmpbuf, text, textlen);
+			tmpbuf[textlen] = 0;
+			for (i = 0; i <= textlen; i++) {
+				n++;
+				if (tmpbuf[i] == '\n' || tmpbuf[i] == 0) {
+					if (t + n > LOG_LINE_MAX - 8) {
+						n = LOG_LINE_MAX - 8 - t;
+						k = 1;
+					}
+					memcpy(text + t, prev, n);
+					t += n;
+					text[t] = 0;
+					if (k)
+						break;
+					n = 0;
+					prev = tmpbuf + i + 1;
+					if (tmpbuf[i] == 0)
+						break;
+					memset(text + t, ' ', plen);
+					t += plen;
+					text[t] = 0;
+				}
+			}
+			textlen = strlen(text);
 		}
 	}
 
