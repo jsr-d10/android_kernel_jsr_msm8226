@@ -262,9 +262,9 @@ void __init check_writebuffer_bugs(void)
 	}
 
 	if (v) {
-		printk("failed, %s\n", reason);
+		printk(KERN_CONT "failed, %s\n", reason);
 		shared_pte_mask = L_PTE_MT_UNCACHED;
 	} else {
-		printk("ok\n");
+		printk(KERN_CONT "ok\n");
 	}
 }

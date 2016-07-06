@@ -853,9 +853,9 @@ void __init mem_init(void)
 		unsigned long pages = memblock_region_memory_end_pfn(reg) -
 			memblock_region_memory_base_pfn(reg);
 		num_physpages += pages;
-		printk(" %ldMB", pages >> (20 - PAGE_SHIFT));
+		printk(KERN_CONT " %ldMB", pages >> (20 - PAGE_SHIFT));
 	}
-	printk(" = %luMB total\n", num_physpages >> (20 - PAGE_SHIFT));
+	printk(KERN_CONT " = %luMB total\n", num_physpages >> (20 - PAGE_SHIFT));
 
 	printk(KERN_NOTICE "Memory: %luk/%luk available, %luk reserved, %luK highmem\n",
 		nr_free_pages() << (PAGE_SHIFT-10),
