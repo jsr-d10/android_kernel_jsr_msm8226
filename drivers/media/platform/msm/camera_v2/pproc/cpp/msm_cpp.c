@@ -167,7 +167,7 @@ static struct msm_cam_clk_info cpp_clk_info[] = {
 }
 
 static int msm_cpp_notify_frame_done(struct cpp_device *cpp_dev,
-	uint32_t buff_mgr_ops, uint8_t put_buf);
+	uint32_t buff_mgr_ops);
 static void cpp_load_fw(struct cpp_device *cpp_dev, char *fw_name_bin);
 static void cpp_timer_callback(unsigned long data);
 
@@ -641,7 +641,7 @@ void msm_cpp_do_tasklet(unsigned long data)
 					CPP_DBG("delete timer.\n");
 					msm_cpp_clear_timer(cpp_dev);
 					msm_cpp_notify_frame_done(cpp_dev,
-						VIDIOC_MSM_BUF_MNGR_BUF_DONE, 0);
+						VIDIOC_MSM_BUF_MNGR_BUF_DONE);
 				} else if ((msg_id ==
 					MSM_CPP_MSG_ID_FRAME_NACK)
 					&& (atomic_read(&cpp_timer.used))) {
@@ -649,7 +649,7 @@ void msm_cpp_do_tasklet(unsigned long data)
 					CPP_DBG("delete timer.\n");
 					msm_cpp_clear_timer(cpp_dev);
 					msm_cpp_notify_frame_done(cpp_dev,
-						VIDIOC_MSM_BUF_MNGR_PUT_BUF, 0);
+						VIDIOC_MSM_BUF_MNGR_BUF_DONE);
 				}
 				i += cmd_len + 2;
 			}
@@ -1077,7 +1077,7 @@ static int msm_cpp_buffer_ops(struct cpp_device *cpp_dev,
 }
 
 static int msm_cpp_notify_frame_done(struct cpp_device *cpp_dev,
-	uint32_t buff_mgr_ops, uint8_t put_buf)
+	uint32_t buff_mgr_ops)
 {
 	struct v4l2_event v4l2_evt;
 	struct msm_queue_cmd *frame_qcmd = NULL;
@@ -1112,22 +1112,12 @@ static int msm_cpp_notify_frame_done(struct cpp_device *cpp_dev,
 			buff_mgr_info.timestamp = processed_frame->timestamp;
 			buff_mgr_info.index =
 				processed_frame->output_buffer_info[0].index;
-			if (put_buf) {
-				rc = msm_cpp_buffer_ops(cpp_dev,
-					buff_mgr_ops,
-					&buff_mgr_info);
-				if (rc < 0) {
-					pr_err("error putting buffer\n");
-					rc = -EINVAL;
-				}
-			} else {
-				rc = msm_cpp_buffer_ops(cpp_dev,
-					buff_mgr_ops,
-					&buff_mgr_info);
-				if (rc < 0) {
-					pr_err("error putting buffer\n");
-					rc = -EINVAL;
-				}
+			rc = msm_cpp_buffer_ops(cpp_dev,
+				buff_mgr_ops,
+				&buff_mgr_info);
+			if (rc < 0) {
+				pr_err("error putting buffer\n");
+				rc = -EINVAL;
 			}
 		}
 
@@ -1144,22 +1134,12 @@ static int msm_cpp_notify_frame_done(struct cpp_device *cpp_dev,
 			buff_mgr_info.timestamp = processed_frame->timestamp;
 			buff_mgr_info.index =
 				processed_frame->output_buffer_info[1].index;
-			if (put_buf) {
-				rc = msm_cpp_buffer_ops(cpp_dev,
-					buff_mgr_ops,
-					&buff_mgr_info);
-				if (rc < 0) {
-					pr_err("error putting buffer\n");
-					rc = -EINVAL;
-				}
-			} else {
-				rc = msm_cpp_buffer_ops(cpp_dev,
-					buff_mgr_ops,
-					&buff_mgr_info);
-				if (rc < 0) {
-					pr_err("error putting buffer\n");
-					rc = -EINVAL;
-				}
+			rc = msm_cpp_buffer_ops(cpp_dev,
+				buff_mgr_ops,
+				&buff_mgr_info);
+			if (rc < 0) {
+				pr_err("error putting buffer\n");
+				rc = -EINVAL;
 			}
 		}
 		v4l2_evt.id = processed_frame->inst_id;
@@ -1219,7 +1199,7 @@ static void msm_cpp_do_timeout_work(struct work_struct *work)
 	msm_cpp_dump_frame_cmd(cpp_timer.data.processed_frame->cpp_cmd_msg,
 		cpp_timer.data.processed_frame->msg_len);
 	msm_cpp_notify_frame_done(cpp_timer.data.cpp_dev,
-		VIDIOC_MSM_BUF_MNGR_PUT_BUF, 1);
+		VIDIOC_MSM_BUF_MNGR_PUT_BUF);
 	atomic_set(&cpp_timer.used, 0);
 	cpp_timer.data.processed_frame = NULL;
 	cpp_timer.data.cpp_dev->timeout_trial_cnt = 0;
