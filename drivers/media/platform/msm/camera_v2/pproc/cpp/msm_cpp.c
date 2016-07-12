@@ -707,7 +707,7 @@ static int cpp_init_hardware(struct cpp_device *cpp_dev)
 		clk_get(&cpp_dev->pdev->dev,
 		cpp_clk_info[MSM_MICRO_IFACE_CLK_IDX].clk_name);
 	if (IS_ERR(cpp_dev->cpp_clk[MSM_MICRO_IFACE_CLK_IDX])) {
-		pr_err("%s get failed\n",
+		pr_err("%s: %s get failed\n", __func__,
 			cpp_clk_info[MSM_MICRO_IFACE_CLK_IDX].clk_name);
 		rc = PTR_ERR(cpp_dev->cpp_clk[MSM_MICRO_IFACE_CLK_IDX]);
 		goto remap_failed;
@@ -870,7 +870,7 @@ static void cpp_load_fw(struct cpp_device *cpp_dev, char *fw_name_bin)
 	msm_cpp_poll(cpp_dev->base, MSM_CPP_MSG_ID_CMD);
 
 	if (fw_name_bin) {
-		pr_debug("%s: FW file: %s\n", __func__, fw_name_bin);
+		pr_info("%s: FW file: %s\n", __func__, fw_name_bin);
 		rc = request_firmware(&fw, fw_name_bin, dev);
 		if (rc) {
 			dev_err(dev,
@@ -1188,9 +1188,7 @@ static int msm_cpp_dump_frame_cmd(uint32_t *cmd, int32_t len)
 
 static void msm_cpp_do_timeout_work(struct work_struct *work)
 {
-
-	pr_err("cpp_timer_callback called. (jiffies=%lu)\n",
-		jiffies);
+	pr_info("cpp_timer_callback called. (jiffies=%lu)\n", jiffies);
 	if (!work || cpp_timer.data.cpp_dev->state != CPP_STATE_ACTIVE) {
 		pr_err("Invalid work:%p or state:%d\n", work,
 			cpp_timer.data.cpp_dev->state);
@@ -1226,7 +1224,7 @@ static void msm_cpp_do_timeout_work(struct work_struct *work)
 	cpp_timer.data.processed_frame = NULL;
 	cpp_timer.data.cpp_dev->timeout_trial_cnt = 0;
 	mutex_unlock(&cpp_timer.data.cpp_dev->mutex);
-	pr_info("exit\n");
+	pr_info("cpp_timer_callback: exit\n");
 }
 
 void cpp_timer_callback(unsigned long data)
@@ -1563,7 +1561,7 @@ long msm_cpp_subdev_ioctl(struct v4l2_subdev *sd,
 				kfree(cpp_dev->fw_name_bin);
 				cpp_dev->fw_name_bin = NULL;
 			}
-			if (ioctl_ptr->len >= MSM_CPP_MAX_FW_NAME_LEN) {
+			if (!ioctl_ptr->len || ioctl_ptr->len >= MSM_CPP_MAX_FW_NAME_LEN) {
 				pr_err("Error: ioctl_ptr->len = %d\n",
 					 ioctl_ptr->len);
 				mutex_unlock(&cpp_dev->mutex);

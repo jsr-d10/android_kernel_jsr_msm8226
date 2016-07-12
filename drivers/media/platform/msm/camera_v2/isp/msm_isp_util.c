@@ -1276,8 +1276,10 @@ void msm_isp_do_tasklet(unsigned long data)
 				irq_status0, irq_status1);
 			continue;
 		}
-		ISP_DBG("%s: status0: 0x%x status1: 0x%x\n",
+#ifdef CONFIG_MSM_ISP_DBG
+		pr_err_ratelimited("%s: status0: 0x%x status1: 0x%x\n",
 			__func__, irq_status0, irq_status1);
+#endif
 		irq_ops->process_reset_irq(vfe_dev,
 			irq_status0, irq_status1);
 		irq_ops->process_halt_irq(vfe_dev,

@@ -130,13 +130,13 @@ int msm_cam_clk_sel_src(struct device *dev, struct msm_cam_clk_info *clk_info,
 		if (clk_src_info[i].clk_name) {
 			mux_clk = clk_get(dev, clk_info[i].clk_name);
 			if (IS_ERR(mux_clk)) {
-				pr_err("%s get failed\n",
+				pr_err("%s: %s get failed\n", __func__,
 					 clk_info[i].clk_name);
 				continue;
 			}
 			src_clk = clk_get(dev, clk_src_info[i].clk_name);
 			if (IS_ERR(src_clk)) {
-				pr_err("%s get failed\n",
+				pr_err("%s: %s get failed\n", __func__,
 					clk_src_info[i].clk_name);
 				continue;
 			}
@@ -158,7 +158,7 @@ int msm_cam_clk_enable(struct device *dev, struct msm_cam_clk_info *clk_info,
 				clk_info[i].clk_name);
 			clk_ptr[i] = clk_get(dev, clk_info[i].clk_name);
 			if (IS_ERR(clk_ptr[i])) {
-				pr_err("%s get failed\n", clk_info[i].clk_name);
+				pr_err("%s: %s get failed\n", __func__, clk_info[i].clk_name);
 				rc = PTR_ERR(clk_ptr[i]);
 				goto cam_clk_get_err;
 			}
