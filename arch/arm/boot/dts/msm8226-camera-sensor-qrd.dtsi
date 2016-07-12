@@ -264,7 +264,7 @@
 
 	qcom,camera@6c {
 		compatible = "qcom,ov2720";
-		reg = <0x6c 0x0>;
+		reg = <0x6c>;
 		qcom,slave-id = <0x6c 0x300a 0x2720>;
 		qcom,csiphy-sd-index = <1>;
 		qcom,csid-sd-index = <1>;
