@@ -581,7 +581,7 @@ static int32_t msm_actuator_set_position(
 		rc = a_ctrl->i2c_client.i2c_func_tbl->i2c_write_table_w_microdelay(
 			&a_ctrl->i2c_client, &reg_setting);
 		if (rc < 0) {
-			pr_err("%s Failed I2C write Line %d\n", __func__, __LINE__);
+			pr_err("Failed I2C write\n");
 			return rc;
 		}
 		a_ctrl->i2c_tbl_index = 0;
@@ -596,7 +596,8 @@ static int32_t msm_actuator_init(struct msm_actuator_ctrl_t *a_ctrl,
 	int32_t rc = -EFAULT;
 	uint16_t i = 0;
 	struct msm_camera_cci_client *cci_client = NULL;
-	CDBG("Enter\n");
+
+	pr_info("name '%s'\n", of_node_full_name(a_ctrl->pdev->dev.of_node));
 
 	for (i = 0; i < ARRAY_SIZE(actuators); i++) {
 		if (set_info->actuator_params.act_type ==
@@ -888,9 +889,8 @@ static long msm_actuator_subdev_ioctl(struct v4l2_subdev *sd,
 static int32_t msm_actuator_power_up(struct msm_actuator_ctrl_t *a_ctrl)
 {
 	int rc = 0;
-	CDBG("%s called\n", __func__);
 
-	CDBG("vcm info: %x %x\n", a_ctrl->vcm_pwd,
+	pr_info("vcm_pwd = 0x%x, vcm_enable = 0x%x\n", a_ctrl->vcm_pwd,
 		a_ctrl->vcm_enable);
 
 	rc = msm_actuator_vreg_control(a_ctrl, 1);
@@ -1026,7 +1026,7 @@ static int32_t msm_actuator_platform_probe(struct platform_device *pdev)
 	msm_actuator_t = kzalloc(sizeof(struct msm_actuator_ctrl_t),
 		GFP_KERNEL);
 	if (!msm_actuator_t) {
-		pr_err("%s:%d failed no memory\n", __func__, __LINE__);
+		pr_err("failed no memory\n");
 		return -ENOMEM;
 	}
 	rc = of_property_read_u32((&pdev->dev)->of_node, "cell-index",
@@ -1062,6 +1062,10 @@ static int32_t msm_actuator_platform_probe(struct platform_device *pdev)
 	msm_actuator_t->act_v4l2_subdev_ops = &msm_actuator_subdev_ops;
 	msm_actuator_t->actuator_mutex = &msm_actuator_mutex;
 	msm_actuator_t->cam_name = pdev->id;
+
+	pr_info("'%s': cam_name = %d, cci-master = %d\n",
+		of_node_full_name((&pdev->dev)->of_node), msm_actuator_t->cam_name,
+		msm_actuator_t->cci_master);
 
 	/* Set platform device handle */
 	msm_actuator_t->pdev = pdev;
