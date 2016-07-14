@@ -146,42 +146,49 @@ static int32_t msm_actuator_init_focus(struct msm_actuator_ctrl_t *a_ctrl,
 	int32_t rc = -EFAULT;
 	int32_t i = 0;
 	enum msm_camera_i2c_reg_addr_type save_addr_type;
+	enum msm_camera_i2c_reg_addr_type addr_type;
+	enum msm_camera_i2c_data_type data_type;
+	enum msm_actuator_i2c_operation op_type;
 	CDBG("Enter\n");
 
 	save_addr_type = a_ctrl->i2c_client.addr_type;
-	for (i = 0; i < size; i++) {
 
-		switch (settings[i].addr_type) {
-		case MSM_ACTUATOR_BYTE_ADDR:
-			a_ctrl->i2c_client.addr_type = MSM_CAMERA_I2C_BYTE_ADDR;
+	for (i = 0; i < size; i++) {
+		op_type = settings[i].i2c_operation;
+		addr_type = settings[i].addr_type;
+		data_type = settings[i].data_type;
+
+		if (addr_type != MSM_ACTUATOR_BYTE_ADDR &&
+		    addr_type != MSM_ACTUATOR_WORD_ADDR) {
+			pr_err("Unsupport addr type: %d\n", addr_type);
 			break;
-		case MSM_ACTUATOR_WORD_ADDR:
-			a_ctrl->i2c_client.addr_type = MSM_CAMERA_I2C_WORD_ADDR;
-			break;
-		default:
-			pr_err("Unsupport addr type: %d\n",
-				settings[i].addr_type);
+		}
+		if (op_type == MSM_ACT_WRITE &&
+		    data_type != MSM_ACTUATOR_BYTE_DATA &&
+		    data_type != MSM_ACTUATOR_WORD_DATA) {
+			pr_err("Unsupport data type: %d\n", data_type);
 			break;
 		}
 
-		switch (settings[i].i2c_operation) {
+		a_ctrl->i2c_client.addr_type = addr_type;
+
+		switch (op_type) {
 		case MSM_ACT_WRITE:
 			rc = a_ctrl->i2c_client.i2c_func_tbl->i2c_write(
 				&a_ctrl->i2c_client,
 				settings[i].reg_addr,
 				settings[i].reg_data,
-				settings[i].data_type);
+				data_type);
 			break;
 		case MSM_ACT_POLL:
 			rc = a_ctrl->i2c_client.i2c_func_tbl->i2c_poll(
 				&a_ctrl->i2c_client,
 				settings[i].reg_addr,
 				settings[i].reg_data,
-				settings[i].data_type);
+				data_type);
 			break;
 		default:
-			pr_err("Unsupport i2c_operation: %d\n",
-				settings[i].i2c_operation);
+			pr_err("Unsupport i2c_operation: %d\n", op_type);
 			break;
 		}
 

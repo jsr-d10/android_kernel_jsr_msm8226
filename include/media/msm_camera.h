@@ -1708,15 +1708,11 @@ enum actuator_type {
 	ACTUATOR_PIEZO,
 };
 
-enum msm_actuator_data_type {
-	MSM_ACTUATOR_BYTE_DATA = 1,
-	MSM_ACTUATOR_WORD_DATA,
-};
+#define MSM_ACTUATOR_BYTE_DATA    MSM_CAMERA_I2C_BYTE_DATA
+#define MSM_ACTUATOR_WORD_DATA    MSM_CAMERA_I2C_WORD_DATA
 
-enum msm_actuator_addr_type {
-	MSM_ACTUATOR_BYTE_ADDR = 1,
-	MSM_ACTUATOR_WORD_ADDR,
-};
+#define MSM_ACTUATOR_BYTE_ADDR    MSM_CAMERA_I2C_BYTE_ADDR
+#define MSM_ACTUATOR_WORD_ADDR    MSM_CAMERA_I2C_WORD_ADDR
 
 enum msm_actuator_i2c_operation {
 	MSM_ACT_WRITE = 0,
@@ -1738,9 +1734,9 @@ struct msm_actuator_reg_params_t {
 
 struct reg_settings_t {
 	uint16_t reg_addr;
-	enum msm_actuator_addr_type addr_type;
+	enum msm_camera_i2c_reg_addr_type addr_type;
 	uint16_t reg_data;
-	enum msm_actuator_data_type data_type;
+	enum msm_camera_i2c_data_type data_type;
 	enum msm_actuator_i2c_operation i2c_operation;
 	uint32_t delay;
 };
@@ -1775,8 +1771,8 @@ struct msm_actuator_params_t {
 	uint16_t data_size;
 	uint16_t init_setting_size;
 	uint32_t i2c_addr;
-	enum msm_actuator_addr_type i2c_addr_type;
-	enum msm_actuator_data_type i2c_data_type;
+	enum msm_camera_i2c_reg_addr_type i2c_addr_type;
+	enum msm_camera_i2c_data_type i2c_data_type;
 	struct msm_actuator_reg_params_t *reg_tbl_params;
 	struct reg_settings_t *init_settings;
 };
