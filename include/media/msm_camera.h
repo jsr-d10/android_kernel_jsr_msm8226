@@ -1734,11 +1734,15 @@ struct msm_actuator_reg_params_t {
 
 struct reg_settings_t {
 	uint16_t reg_addr;
+#ifdef MSM_CAMERA_EXT_ACTUATOR
 	enum msm_camera_i2c_reg_addr_type addr_type;
+#endif
 	uint16_t reg_data;
+#ifdef MSM_CAMERA_EXT_ACTUATOR
 	enum msm_camera_i2c_data_type data_type;
 	enum msm_actuator_i2c_operation i2c_operation;
 	uint32_t delay;
+#endif
 };
 
 struct region_params_t {

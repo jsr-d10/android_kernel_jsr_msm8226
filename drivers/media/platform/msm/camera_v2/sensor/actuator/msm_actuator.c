@@ -152,11 +152,18 @@ static int32_t msm_actuator_init_focus(struct msm_actuator_ctrl_t *a_ctrl,
 	CDBG("Enter\n");
 
 	save_addr_type = a_ctrl->i2c_client.addr_type;
+#ifndef MSM_CAMERA_EXT_ACTUATOR
+	op_type = MSM_ACT_WRITE;
+	addr_type = a_ctrl->i2c_client.addr_type;
+	data_type = a_ctrl->i2c_data_type;
+#endif
 
 	for (i = 0; i < size; i++) {
+#ifdef MSM_CAMERA_EXT_ACTUATOR
 		op_type = settings[i].i2c_operation;
 		addr_type = settings[i].addr_type;
 		data_type = settings[i].data_type;
+#endif
 
 		if (addr_type != MSM_ACTUATOR_BYTE_ADDR &&
 		    addr_type != MSM_ACTUATOR_WORD_ADDR) {
@@ -192,8 +199,10 @@ static int32_t msm_actuator_init_focus(struct msm_actuator_ctrl_t *a_ctrl,
 			break;
 		}
 
+#ifdef MSM_CAMERA_EXT_ACTUATOR
 		if (0 != settings[i].delay)
 			msleep(settings[i].delay);
+#endif
 
 		if (rc < 0)
 			break;
