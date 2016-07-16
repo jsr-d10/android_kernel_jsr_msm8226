@@ -17,6 +17,7 @@
 #include <linux/of.h>
 #include <linux/of_gpio.h>
 #include <linux/of_platform.h>
+#include <linux/wakelock.h>
 #include <media/msm_isp.h>
 #include "msm_sd.h"
 #include "msm_cci.h"
@@ -48,6 +49,8 @@
 #define CCI_I2C_MAX_WRITE 8192
 
 static struct v4l2_subdev *g_cci_subdev;
+
+static struct mutex ref_count_lock;
 
 static void msm_cci_set_clk_param(struct cci_device *cci_dev)
 {
@@ -715,6 +718,8 @@ static int32_t msm_cci_init(struct v4l2_subdev *sd,
 		return 0;
 	}
 
+	wake_lock(&cci_dev->cci_wakelock);
+
 	rc = msm_camera_request_gpio_table(cci_dev->cci_gpio_tbl,
 		cci_dev->cci_gpio_tbl_size, 1);
 	if (rc < 0) {
@@ -792,6 +797,8 @@ static int32_t msm_cci_release(struct v4l2_subdev *sd)
 
 	msm_camera_request_gpio_table(cci_dev->cci_gpio_tbl,
 		cci_dev->cci_gpio_tbl_size, 0);
+
+	wake_unlock(&cci_dev->cci_wakelock);
 
 	cci_dev->cci_state = CCI_STATE_DISABLED;
 
@@ -1197,6 +1204,9 @@ static int __devinit msm_cci_probe(struct platform_device *pdev)
 	g_cci_subdev = &new_cci_dev->msm_sd.sd;
 	CDBG("%s cci subdev %p\n", __func__, &new_cci_dev->msm_sd.sd);
 	CDBG("%s line %d\n", __func__, __LINE__);
+
+	wake_lock_init(&new_cci_dev->cci_wakelock, WAKE_LOCK_SUSPEND, "msm_cci_wakelock");
+
 	return 0;
 
 cci_release_mem:
