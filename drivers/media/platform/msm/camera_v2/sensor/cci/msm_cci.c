@@ -809,44 +809,26 @@ static int32_t msm_cci_config(struct v4l2_subdev *sd,
 	struct msm_camera_cci_ctrl *cci_ctrl)
 {
 	int32_t rc = 0;
-	int32_t retry = 5;
 	CDBG("%s line %d cmd %d\n", __func__, __LINE__,
 		cci_ctrl->cmd);
-	while (retry--) {
-		switch (cci_ctrl->cmd) {
-		case MSM_CCI_INIT:
-			mutex_lock(&ref_count_lock);
-			rc = msm_cci_init(sd, cci_ctrl);
-			mutex_unlock(&ref_count_lock);
-			break;
-		case MSM_CCI_RELEASE:
-			mutex_lock(&ref_count_lock);
-			rc = msm_cci_release(sd);
-			mutex_unlock(&ref_count_lock);
-			break;
-		case MSM_CCI_I2C_READ:
-			mutex_lock(&ref_count_lock);
-			rc = msm_cci_i2c_read_bytes(sd, cci_ctrl);
-			mutex_unlock(&ref_count_lock);
-			break;
-		case MSM_CCI_I2C_WRITE:
-		case MSM_CCI_I2C_WRITE_SEQ:
-			mutex_lock(&ref_count_lock);
-			rc = msm_cci_i2c_write(sd, cci_ctrl);
-			mutex_unlock(&ref_count_lock);
-			break;
-		case MSM_CCI_GPIO_WRITE:
-			break;
-		default:
-			rc = -ENOIOCTLCMD;
-		}
-
-		if (rc >= 0) {
-			break;
-		} else {
-			pr_err("failed, retry is %d\n", retry);
-			usleep_range(10*1000, 20*1000);
-		}
+	switch (cci_ctrl->cmd) {
+	case MSM_CCI_INIT:
+		rc = msm_cci_init(sd, cci_ctrl);
+		break;
+	case MSM_CCI_RELEASE:
+		rc = msm_cci_release(sd);
+		break;
+	case MSM_CCI_I2C_READ:
+		rc = msm_cci_i2c_read_bytes(sd, cci_ctrl);
+		break;
+	case MSM_CCI_I2C_WRITE:
+	case MSM_CCI_I2C_WRITE_SEQ:
+		rc = msm_cci_i2c_write(sd, cci_ctrl);
+		break;
+	case MSM_CCI_GPIO_WRITE:
+		break;
+	default:
+		rc = -ENOIOCTLCMD;
 	}
 	CDBG("%s line %d rc %d\n", __func__, __LINE__, rc);
 	cci_ctrl->status = rc;
@@ -1224,7 +1206,6 @@ static int __devinit msm_cci_probe(struct platform_device *pdev)
 	CDBG("%s line %d\n", __func__, __LINE__);
 
 	wake_lock_init(&new_cci_dev->cci_wakelock, WAKE_LOCK_SUSPEND, "msm_cci_wakelock");
-	mutex_init(&ref_count_lock);
 
 	return 0;
 
