@@ -146,6 +146,15 @@ config OV5648
 		snapshot set to 2592*1944 at 12 fps,
 		This sensor driver does not support auto focus.
 
+config IMX214
+	bool "Sensor IMX214 (BAYER 12M)"
+	depends on MSMB_CAMERA
+	---help---
+		Sony 12 MP Bayer Sensor with auto focus, uses
+		4 mipi lanes, preview config = 2104 x 1560 at 49 fps,
+		snapshot config = 4208 x 3120 at 24 fps,
+		Video HDR support.
+
 config MT9M114
 	bool "Sensor MT9M114 (YUV 1.26MP)"
 	depends on MSMB_CAMERA
