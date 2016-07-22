@@ -286,6 +286,7 @@ static int read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 	}
 
 	eb_info = e_ctrl->eboard_info;
+	pr_info("%s: slave-addr = 0x%X\n", __func__, eb_info->i2c_slaveaddr);
 	for (j = 0; j < block->num_map; j++) {
 		if (emap[j].saddr.addr) {
 			eb_info->i2c_slaveaddr = emap[j].saddr.addr;
@@ -302,7 +303,7 @@ static int read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 				emap[j].page.data, emap[j].page.data_t);
 				msleep(emap[j].page.delay);
 			if (rc < 0) {
-				pr_err("%s: page write failed\n", __func__);
+				pr_err("%s: page write failed (j = %d)\n", __func__, j);
 				return rc;
 			}
 		}
