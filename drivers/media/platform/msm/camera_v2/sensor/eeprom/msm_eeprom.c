@@ -17,6 +17,7 @@
 #include "msm_sd.h"
 #include "msm_cci.h"
 #include "msm_eeprom.h"
+#include "msm_sensor.h"
 
 #undef CDBG
 #ifdef CONFIG_MSM_EEPROM_DEBUG
@@ -958,6 +959,17 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 		pr_err("%s failed rc %d\n", __func__, rc);
 		kfree(e_ctrl);
 		return rc;
+	}
+
+	if (pdev->id >= 0) {
+		int ret = msm_sensor_check_init_by_subdev(pdev, 
+			SUB_MODULE_EEPROM, pdev->id);
+		if (ret < 0) {
+			pr_warn("%s: id=%2d [%s] SKIP\n", __func__,
+				pdev->id, dev_name(&pdev->dev));
+			kfree(e_ctrl);
+			return -ENODEV;
+		}
 	}
 
 	/* Set platform device handle */

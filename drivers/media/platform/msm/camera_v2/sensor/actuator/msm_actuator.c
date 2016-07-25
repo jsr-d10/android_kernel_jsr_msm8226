@@ -16,6 +16,7 @@
 #include "msm_sd.h"
 #include "msm_actuator.h"
 #include "msm_cci.h"
+#include "msm_sensor.h"
 
 DEFINE_MSM_MUTEX(msm_actuator_mutex);
 
@@ -1032,6 +1033,17 @@ static int32_t msm_actuator_platform_probe(struct platform_device *pdev)
 		kfree(msm_actuator_t);
 		pr_err("failed rc %d\n", rc);
 		return rc;
+	}
+
+	if (pdev->id >= 0) {
+		int ret = msm_sensor_check_init_by_subdev(pdev, 
+			SUB_MODULE_ACTUATOR, pdev->id);
+		if (ret < 0) {
+			pr_warn("'%s': id = %d, SKIP\n",
+				of_node_full_name((&pdev->dev)->of_node), pdev->id);
+			kfree(msm_actuator_t);
+			return -ENODEV;
+		}
 	}
 
 	rc = of_property_read_u32((&pdev->dev)->of_node, "qcom,cci-master",

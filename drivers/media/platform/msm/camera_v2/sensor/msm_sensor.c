@@ -1435,3 +1435,59 @@ FREE_CCI_CLIENT:
 	kfree(cci_client);
 	return rc;
 }
+
+struct msm_camera_enum_t {
+	const char * substr;
+	int sub_module;
+	int subdev_id;
+	struct msm_sensor_ctrl_t * sns;
+};
+
+static int msm_camera_enum(struct device * dev, void * data)
+{
+	struct msm_camera_enum_t * cfg = (struct msm_camera_enum_t *)data;
+	const char * dev_fullname;
+	const char * substr = cfg->substr;
+	struct msm_sensor_ctrl_t * sns;
+	struct msm_sensor_info_t * sns_info;
+
+	if (cfg->sns)
+		return 1;
+	if (!dev || !dev->of_node || !dev->driver)
+		return 0;
+	if (dev->driver->of_match_table == NULL)
+		return 0;
+	if (dev->driver->of_match_table->data == NULL)
+		return 0;
+	if (!substr)
+		substr = "/qcom,camera@";
+	dev_fullname = of_node_full_name(dev->of_node);
+	if (strstr(dev_fullname, substr) == NULL)
+		return 0;
+	sns = (struct msm_sensor_ctrl_t *) dev->driver->of_match_table->data;
+	if (!sns->sensordata)
+		return 0;
+	sns_info = sns->sensordata->sensor_info;
+	if (!sns_info)
+		return 0;
+	if (sns_info->subdev_id[cfg->sub_module] == cfg->subdev_id) {
+		cfg->sns = sns;
+		return 1;
+	}
+	return 0;
+}
+
+int msm_sensor_check_init_by_subdev(struct platform_device * pdev,
+	int sub_module, int subdev_id)
+{
+	struct bus_type	* bus = pdev->dev.bus;
+	struct msm_camera_enum_t cfg;
+	
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.sub_module = sub_module;
+	cfg.subdev_id = subdev_id;
+	bus_for_each_dev(bus, NULL, &cfg, msm_camera_enum);
+	if (!cfg.sns)
+		return -ENODEV;
+	return 0;
+}
