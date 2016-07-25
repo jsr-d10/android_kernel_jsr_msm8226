@@ -91,6 +91,7 @@
 		qcom,eeprom-src = <&eeprom13>;
 		qcom,mount-angle = <90>;
 		qcom,sensor-name = "ov13850";
+		qcom,sensor-fullname = "OmniVision Truly ov13850";
 		
 		cam_vdig-supply = <&pm8226_l5>;
 		cam_vana-supply = <&pm8226_l19>;
@@ -188,6 +189,7 @@
 		qcom,eeprom-src = <&eeprom6b>;
 		qcom,mount-angle = <90>;
 		qcom,sensor-name = "t4k37ab";
+		qcom,sensor-fullname = "Toshiba Qtech t4k37ab";
 		
 		cam_vdig-supply = <&pm8226_l5>;
 		cam_vana-supply = <&pm8226_l19>;
@@ -236,6 +238,7 @@
 		qcom,csid-sd-index = <0>;
 		qcom,mount-angle = <90>;
 		qcom,sensor-name = "imx135";
+		qcom,sensor-fullname = "Sony Liteon imx135";
 		qcom,actuator-src = <&actuator36>;
 		qcom,led-flash-src = <&led_flash0>;
 		
@@ -350,6 +353,7 @@
 		qcom,led-flash-src = <&led_flash0>;
 		qcom,mount-angle = <90>;
 		qcom,sensor-name = "imx214";
+		qcom,sensor-fullname = "Sony imx214";
 		qcom,eeprom-src = <&eeprom20>;
 
 		cam_vdig-supply = <&pm8226_l5>;
@@ -394,6 +398,7 @@
 		qcom,csid-sd-index = <1>;
 		qcom,mount-angle = <270>;
 		qcom,sensor-name = "ov2720";
+		qcom,sensor-fullname = "OmniVision Truly ov2720";
 		
 		cam_vdig-supply = <&pm8226_l5>;
 		cam_vana-supply = <&pm8226_l19>;
@@ -495,6 +500,7 @@
 		qcom,eeprom-src = <&eeprom6f>;
 		qcom,mount-angle = <270>;
 		qcom,sensor-name = "skuf_ov5648_p5v23c";
+		qcom,sensor-fullname = "OmniVision Truly ov5648";
 		
 		cam_vdig-supply = <&pm8226_l5>;
 		cam_vana-supply = <&pm8226_l19>;

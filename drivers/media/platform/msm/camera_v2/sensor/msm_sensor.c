@@ -130,6 +130,15 @@ static int32_t msm_sensor_get_dt_data(struct device_node *of_node,
 		goto FREE_SENSORDATA;
 	}
 
+	rc = of_property_read_string(of_node, "qcom,sensor-fullname",
+		&s_ctrl->sensor_fullname);
+	CDBG("%s qcom,sensor-fullname \"%s\", rc %d\n", __func__,
+		s_ctrl->sensor_fullname, rc);
+	if (rc < 0) {
+		s_ctrl->sensor_fullname = NULL;
+		rc = 0;
+	}
+
 	rc = of_property_read_u32(of_node, "qcom,cci-master",
 		&s_ctrl->cci_i2c_master);
 	CDBG("%s qcom,cci-master %d, rc %d\n", __func__, s_ctrl->cci_i2c_master,
@@ -1057,6 +1066,14 @@ int msm_sensor_check_id(struct msm_sensor_ctrl_t *s_ctrl)
 		rc = msm_sensor_match_id(s_ctrl);
 	if (rc < 0)
 		pr_err("%s:%d match id failed rc %d\n", __func__, __LINE__, rc);
+	if (rc >= 0) {
+		const char * sensor_fullname = s_ctrl->sensor_fullname;
+		uint16_t chipid = s_ctrl->sensordata->slave_info->sensor_id;
+		if (!sensor_fullname)
+			sensor_fullname = s_ctrl->sensordata->sensor_name;
+		pr_info("%s: chip id = %x => name = \"%s\" \n", __func__,
+			chipid, sensor_fullname);
+	}
 	return rc;
 }
 
