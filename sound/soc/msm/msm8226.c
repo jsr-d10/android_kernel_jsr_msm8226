@@ -1857,6 +1857,7 @@ static struct snd_soc_dai_link msm8226_9306_dai[] = {
 		.codec_name = "tapan_codec",
 		.codec_dai_name	= "tapan_tx1",
 		.no_pcm = 1,
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 		.be_id = MSM_BACKEND_DAI_SLIMBUS_0_TX,
 		.be_hw_params_fixup = msm_slim_0_tx_be_hw_params_fixup,
 		.ops = &msm8226_be_ops,
