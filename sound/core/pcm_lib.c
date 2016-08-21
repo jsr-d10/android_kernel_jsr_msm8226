@@ -1920,8 +1920,10 @@ static int wait_for_avail(struct snd_pcm_substream *substream,
 			goto _endloop;
 		}
 		if (!tout) {
-			snd_printd("%s write error (DMA or IRQ trouble?)\n",
+			pr_err("%s: %s write error (DMA or IRQ trouble?)\n", __func__,
 				   is_playback ? "playback" : "capture");
+			pr_err("%s: wait_time = %d, no_period_wakeup = %d, rate = %d, period_size = %d \n",
+				__func__, (int)wait_time, (int)runtime->no_period_wakeup, (int)runtime->rate, (int)runtime->period_size);
 			err = -EIO;
 			break;
 		}
@@ -2003,8 +2005,10 @@ static snd_pcm_sframes_t snd_pcm_lib_write1(struct snd_pcm_substream *substream,
 			runtime->twake = min_t(snd_pcm_uframes_t, size,
 					runtime->control->avail_min ? : 1);
 			err = wait_for_avail(substream, &avail);
-			if (err < 0)
+			if (err < 0) {
+				pr_err("%s: wait_for_avail: err = %d (twake = %d, size = %d) \n", __func__, err, (int)runtime->twake, (int)size);
 				goto _end_unlock;
+			}
 		}
 		frames = size > avail ? avail : size;
 		cont = runtime->buffer_size - runtime->control->appl_ptr % runtime->buffer_size;
@@ -2013,6 +2017,7 @@ static snd_pcm_sframes_t snd_pcm_lib_write1(struct snd_pcm_substream *substream,
 		if (snd_BUG_ON(!frames)) {
 			runtime->twake = 0;
 			snd_pcm_stream_unlock_irq(substream);
+			pr_err("%s: ERROR: frames == 0 !!!\n", __func__);
 			return -EINVAL;
 		}
 		appl_ptr = runtime->control->appl_ptr;
@@ -2020,8 +2025,10 @@ static snd_pcm_sframes_t snd_pcm_lib_write1(struct snd_pcm_substream *substream,
 		snd_pcm_stream_unlock_irq(substream);
 		err = transfer(substream, appl_ofs, data, offset, frames);
 		snd_pcm_stream_lock_irq(substream);
-		if (err < 0)
+		if (err < 0) {
+			pr_err("%s: transfer: err = %d\n", __func__, err);
 			goto _end_unlock;
+		}
 		switch (runtime->status->state) {
 		case SNDRV_PCM_STATE_XRUN:
 			err = -EPIPE;
@@ -2046,8 +2053,10 @@ static snd_pcm_sframes_t snd_pcm_lib_write1(struct snd_pcm_substream *substream,
 		if (runtime->status->state == SNDRV_PCM_STATE_PREPARED &&
 		    snd_pcm_playback_hw_avail(runtime) >= (snd_pcm_sframes_t)runtime->start_threshold) {
 			err = snd_pcm_start(substream);
-			if (err < 0)
+			if (err < 0) {
+				pr_err("%s: snd_pcm_start: err = %d\n", __func__, err);
 				goto _end_unlock;
+			}
 		}
 	}
  _end_unlock:
@@ -2055,6 +2064,8 @@ static snd_pcm_sframes_t snd_pcm_lib_write1(struct snd_pcm_substream *substream,
 	if (xfer > 0 && err >= 0)
 		snd_pcm_update_state(substream, runtime);
 	snd_pcm_stream_unlock_irq(substream);
+	if (err)
+		pr_err("%s: err = %d\n", __func__, err);
 	return xfer > 0 ? (snd_pcm_sframes_t)xfer : err;
 }
 
@@ -2082,8 +2093,10 @@ snd_pcm_sframes_t snd_pcm_lib_write(struct snd_pcm_substream *substream, const v
 	int err;
 
 	err = pcm_sanity_check(substream);
-	if (err < 0)
+	if (err < 0) {
+		pr_err("%s: pcm_sanity_check: err = %d\n", __func__, err);
 		return err;
+	}
 	runtime = substream->runtime;
 	nonblock = !!(substream->f_flags & O_NONBLOCK);
 

@@ -2665,6 +2665,8 @@ static int snd_pcm_playback_ioctl1(struct file *file,
 		if (copy_from_user(&xferi, _xferi, sizeof(xferi)))
 			return -EFAULT;
 		result = snd_pcm_lib_write(substream, xferi.buf, xferi.frames);
+		if (result < 0)
+			pr_err("%s: SNDRV_PCM_IOCTL_WRITEI_FRAMES: err = %d\n", __func__, (int)result);
 		__put_user(result, &_xferi->result);
 		return result < 0 ? result : 0;
 	}
