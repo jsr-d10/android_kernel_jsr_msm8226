@@ -134,6 +134,45 @@ config LLCON
 	default n
 	select FONTS
 
+config LLCON_DBG
+	bool "Low level console DEBUG"
+	default n
+	select LLCON
+
+config LLCON_DBG_FB_ADDR
+	hex "FrameBuffer physical address"
+	depends on LLCON_DBG
+	default 0x00000000
+
+config LLCON_DBG_FB_VMEM
+	hex "FrameBuffer virtual address"
+	depends on LLCON_DBG
+	default 0x00000000
+
+config LLCON_DBG_FB_HEIGHT
+	int "Display height"
+	depends on LLCON_DBG
+	range 0 9000
+	default 1024
+
+config LLCON_DBG_FB_WIDTH
+	int "Display width"
+	depends on LLCON_DBG
+	range 0 9000
+	default 720
+
+config LLCON_DBG_FB_PITCH
+	int "Display virtual width"
+	depends on LLCON_DBG
+	range 0 9000
+	default 720
+
+config LLCON_DBG_FONT_SIZE
+	int "Used font width"
+	depends on LLCON_DBG
+	range 6 36
+	default 8
+
 config FONTS
 	bool "Select compiled-in fonts"
 	depends on FRAMEBUFFER_CONSOLE || STI_CONSOLE || LLCON

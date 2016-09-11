@@ -18,8 +18,7 @@ font-objs-$(CONFIG_FONT_MINI_4x6)  += font_mini_4x6.o
 
 font-objs += $(font-objs-y)
 
-obj-$(CONFIG_LLCON)                += $(font-objs)
-obj-$(CONFIG_LLCON)                += llcon.o
+obj-$(CONFIG_LLCON)                += llcon.o font.o
 
 # Each configuration option enables a list of files.
 
