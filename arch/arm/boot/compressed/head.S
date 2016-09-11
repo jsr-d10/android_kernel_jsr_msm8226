@@ -176,6 +176,19 @@ not_angel:
 		ldr	r4, =zreladdr
 #endif
 
+#ifdef CONFIG_LLCON_DBG
+		mov   r5, #0
+		subs  r5, r5, #1
+		mov   r3, #CONFIG_LLCON_DBG_FB_ADDR
+		str   r5, [r3]
+		adds  r3, r3, #CONFIG_LLCON_DBG_FB_PITCH * 3
+		str   r5, [r3]
+		adds  r3, r3, #CONFIG_LLCON_DBG_FB_PITCH * 3
+		str   r5, [r3]
+		adds  r3, r3, #CONFIG_LLCON_DBG_FB_PITCH * 3
+		str   r5, [r3]
+#endif
+
 		bl	cache_on
 
 restart:	adr	r0, LC0
