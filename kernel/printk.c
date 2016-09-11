@@ -353,7 +353,7 @@ static void log_store(int facility, int level,
 	msg->len = sizeof(struct log) + text_len + dict_len + pad_len;
 
 #ifdef CONFIG_LLCON
-	if (llcon_enabled) {
+	if (llcon_enabled || llcon_dumplog) {
 		int mlen;
 		mlen = syslog_print_line(log_next_idx, llcon_buf, sizeof(llcon_buf)-4);
 		llcon_emit_log_line(llcon_buf, mlen);

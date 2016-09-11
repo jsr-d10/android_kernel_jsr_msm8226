@@ -607,6 +607,15 @@ int llcon_dmp_reserve_ram(void * addr, size_t size)
 	return 0;
 }
 
+struct _log_msg {
+	u64 ts_nsec;            /* timestamp in nanoseconds */
+	u16 len;                /* length of entire record */
+	u16 text_len;           /* length of text buffer */
+	u16 dict_len;           /* length of dictionary buffer */
+	u16 level;              /* syslog level + facility */
+	u32 cpuid;
+};
+
 static void llcon_syslog_dumper(struct kmsg_dumper *dumper,
 	    enum kmsg_dump_reason reason,
 	    const char *s1, unsigned long l1,
@@ -614,10 +623,24 @@ static void llcon_syslog_dumper(struct kmsg_dumper *dumper,
 {
 	int i;
 	if (reason == KMSG_DUMP_PANIC) {
-		for (i = 0; i < l1; i++)
-			llcon_dmp_putc(s1[i]);
-		for (i = 0; i < l2; i++)
-			llcon_dmp_putc(s2[i]);
+		struct _log_msg * msg = NULL;
+		int x = 0;
+		for (i = 0; i < l2; i++) {
+			if (!msg) {
+				msg = (struct _log_msg *)(s2 + i);
+				x = 0;
+				continue;
+			}
+			x++;
+			if (x < sizeof(struct _log_msg))
+				continue;
+			if (x < sizeof(struct _log_msg) + msg->text_len)
+				llcon_dmp_putc(s2[i]);
+			if (x >= msg->len - 1) {
+				llcon_dmp_putc('\n');
+				msg = NULL;
+			}
+		}
 	}
 }
 
