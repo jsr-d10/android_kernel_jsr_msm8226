@@ -40,7 +40,7 @@ static struct llcon_desc llcon;
 
 /*
 * androidboot.llcon=<mode>,<delay>,<textwrap>,<fb_addr>,<fb_bpp>,<fb_height>,
-*                   <fb_width>,<fb_pitch>,<font_size>,<font_color>
+*                   <fb_width>,<fb_stride>,<font_size>,<font_color>
 */
 
 static int __init llcon_setup(char *str)
@@ -83,8 +83,14 @@ static int __init llcon_setup(char *str)
 	if (mode <= LLCON_MODE_DISABLED)
 		return 1;
 
-	llcon.display.bpp = 24;
-	llcon.display.pixel_size = 3;
+	llcon.display.bpp = LLCON_BPP;
+	llcon.display.pixel_size = LLCON_PXL_SIZE;
+
+	if (llcon.display.stride < llcon.display.width * LLCON_PXL_SIZE)
+		llcon.display.stride *= LLCON_PXL_SIZE;
+
+	if (llcon.display.stride < llcon.display.width * LLCON_PXL_SIZE)
+		return 1;
 
 	switch (font_size) {
 #ifdef CONFIG_FONT_SUN12x22
@@ -216,7 +222,7 @@ void llcon_clear(void)
 	size_t size;
 	if (!llcon_enabled)
 		return;
-	size = llcon.display.stride * llcon.display.height * LLCON_PXL_SIZE;
+	size = llcon.display.stride * llcon.display.height;
 	memset(llcon.display.fbaddr, 0, size);
 }
 
@@ -224,8 +230,8 @@ static inline uint8_t * get_char_pos_ptr(size_t x, size_t y)
 {
 	size_t offset;
 	offset = y * (size_t)llcon.font.height * llcon.display.stride;
-	offset += x * (size_t)llcon.font.width;
-	return llcon.display.fbaddr + offset * LLCON_PXL_SIZE;
+	offset += x * (size_t)llcon.font.width * LLCON_PXL_SIZE;
+	return llcon.display.fbaddr + offset;
 } 
 
 static inline uint8_t * get_cursor_pos_ptr(void)
@@ -364,8 +370,8 @@ int llcon_set_font_type(const struct font_desc * font)
 	if (llcon.font.width > 16)
 		return -2;
 
-	llcon.glyph_stride = llcon.display.stride - (size_t)llcon.font.width;
-	llcon.glyph_stride *= LLCON_PXL_SIZE;
+	llcon.glyph_stride = llcon.display.stride;
+	llcon.glyph_stride -= (size_t)llcon.font.width * LLCON_PXL_SIZE;
 	return 0;
 }
 
@@ -422,7 +428,7 @@ int llcon_thread(void * data)
 	llcon_clear();
 
 	fb_addr = get_char_pos_ptr(0, 0);
-	scanline = llcon.display.stride * LLCON_PXL_SIZE * gh;
+	scanline = llcon.display.stride * gh;
 	dx = gw * LLCON_PXL_SIZE;
 	dy = scanline - (dx * resx);
 
@@ -496,7 +502,7 @@ int llcon_init(void)
 	}
 
 	prot = pgprot_noncached(PAGE_KERNEL);
-	fbsize = llcon.display.height * llcon.display.stride * LLCON_PXL_SIZE;
+	fbsize = llcon.display.height * llcon.display.stride;
 	pc = (fbsize / PAGE_SIZE) + 1;
 	pages = kmalloc(sizeof(struct page *) * pc, GFP_KERNEL);
 	if (!pages)
@@ -537,7 +543,7 @@ int llcon_init(void)
 		}
 	}
 
-	pr_info("LLCON: mode: %d, addr: %p (%p), size: %ux%u, pitch: %u,"
+	pr_info("LLCON: mode: %d, addr: %p (%p), size: %ux%u, stride: %u,"
 		" font: %dx%d [%x], delay: %u \n",
 		llcon.mode, (void *)base, llcon.display.fbaddr,
 		llcon.display.width, llcon.display.height, llcon.display.stride,
@@ -769,14 +775,14 @@ int llcon_dbg_buf(uint32_t y, uint32_t x, const char * buf, int len)
 	if (!font)
 		return -1;
 
-	stride = CONFIG_LLCON_DBG_FB_PITCH - (size_t)font->width;
-	stride *= LLCON_PXL_SIZE;
+	stride = CONFIG_LLCON_DBG_FB_STRIDE;
+	stride -= (size_t)font->width * LLCON_PXL_SIZE;
 
 	offset = (size_t)font->width * LLCON_PXL_SIZE;
 
 	pixels = fb_addr;
-	pixels += y * LLCON_PXL_SIZE * CONFIG_LLCON_DBG_FB_PITCH * font->height;
-	pixels += x * LLCON_PXL_SIZE * font->width;
+	pixels += y * font->height * CONFIG_LLCON_DBG_FB_STRIDE;
+	pixels += x * font->width * LLCON_PXL_SIZE;
 
 	for (i=0; i < len; i++) {
 		llcon_drawglyph_x(pixels, 0xFFFFFF, font->width, font->height,

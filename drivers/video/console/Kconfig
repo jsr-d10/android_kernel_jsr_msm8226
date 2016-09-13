@@ -161,11 +161,11 @@ config LLCON_DBG_FB_WIDTH
 	range 0 9000
 	default 720
 
-config LLCON_DBG_FB_PITCH
-	int "Display virtual width"
+config LLCON_DBG_FB_STRIDE
+	int "Display scanline width (bytes)"
 	depends on LLCON_DBG
-	range 0 9000
-	default 720
+	range 0 99000
+	default 2160
 
 config LLCON_DBG_FONT_SIZE
 	int "Used font width"

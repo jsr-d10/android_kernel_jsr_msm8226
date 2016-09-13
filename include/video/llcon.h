@@ -148,7 +148,7 @@ do {									\
 		pixels += x * 3;					\
 		for (i=0; i < len; i++) {				\
 			*((uint32_t *)pixels) = 0xFFFFFFFF;		\
-			pixels += CONFIG_LLCON_DBG_FB_PITCH * 3;	\
+			pixels += CONFIG_LLCON_DBG_FB_STRIDE;	\
 		}							\
 	}								\
 } while (0)
