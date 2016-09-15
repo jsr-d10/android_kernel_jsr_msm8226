@@ -127,8 +127,8 @@ __setup("androidboot.llcon=", llcon_setup);
 static int __init llcondmp_setup(char *str)
 {
 	int ints[4];
-	void * addr;
-	size_t size;
+	void * addr = NULL;
+	size_t size = 0;
 
 	str = get_options(str, 3, ints);
 	if (!ints[0])
