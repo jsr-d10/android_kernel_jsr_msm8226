@@ -5,6 +5,7 @@
 #ifndef __LINUX_BLK_TYPES_H
 #define __LINUX_BLK_TYPES_H
 
+#ifdef __KERNEL__
 #ifdef CONFIG_BLOCK
 
 #include <linux/types.h>
@@ -120,6 +121,7 @@ struct bio {
 #define BIO_POOL_IDX(bio)	((bio)->bi_flags >> BIO_POOL_OFFSET)
 
 #endif /* CONFIG_BLOCK */
+#endif /* __KERNEL__ */
 
 /*
  * Request flags.  For use in the cmd_flags field of struct request, and in
