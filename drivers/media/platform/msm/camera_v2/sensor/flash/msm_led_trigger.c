@@ -197,7 +197,12 @@ static int32_t msm_led_trigger_probe(struct platform_device *pdev)
 
 			if (flashtype == GPIO_FLASH) {
 				/* use fake current */
-				fctrl.flash_op_current[i] = LED_FULL;
+                                /****************************************************
+                                 * S-trace: Do not use LED_FULL because it can lead *
+                                 *          to torch flickering on some devices     *
+                                 ****************************************************/
+                               fctrl.torch_op_current = LED_HALF;
+
 			} else {
 				rc = of_property_read_u32(flash_src_node,
 					"qcom,current",
