@@ -663,7 +663,7 @@ static void __cpufreq_interactive_timer(unsigned long data, bool is_notif)
 	int cpu_load;
 	struct cpufreq_interactive_cpuinfo *pcpu =
 		&per_cpu(cpuinfo, data);
-	unsigned int new_freq;
+	unsigned int new_freq = 0;
 	unsigned int loadadjfreq;
 	unsigned int index;
 	unsigned long flags;
