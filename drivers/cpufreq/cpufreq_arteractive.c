@@ -56,7 +56,7 @@
 #include <asm/cputime.h>
 
 #define CONFIG_MODE_AUTO_CHANGE
-#define CONFIG_RETENTION_CHANGE
+// #define CONFIG_RETENTION_CHANGE
 
 /*
  * Governor-side implemented Touchboost by Paul Reioux(faux123)
