@@ -95,6 +95,17 @@ module_param(floated_charger_enable , bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(floated_charger_enable,
 	"Whether to enable floated charger");
 
+static unsigned int force_usb_charging_mode;
+module_param(force_usb_charging_mode , uint, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(force_usb_charging_mode,
+		"Force USB charging mode: "
+		"0 (Auto detect), "
+		"1 (Standard Downstream Port - 500mA + data transfer), "
+		"2 (Charging Downstream Port - 1500mA + data transfer), "
+		"3 (Dedicated Charging Port, 1500mA + no data transfer)"
+		"4 (Dedicated Charging Port, 2500mA + no data transfer)"
+		);
+
 static DECLARE_COMPLETION(pmic_vbus_init);
 static struct msm_otg *the_msm_otg;
 static bool debug_aca_enabled;
@@ -2673,8 +2684,38 @@ static void msm_otg_sm_work(struct work_struct *w)
 					msm_otg_start_peripheral(otg, 1);
 					otg->phy->state =
 						OTG_STATE_B_PERIPHERAL;
-					mod_timer(&motg->chg_check_timer,
-							CHG_RECHECK_DELAY);
+					switch (force_usb_charging_mode) {
+						case 1:
+							dev_info(motg->phy.dev, "WARNING: force_usb_charging_mode=%u, charging in SDP mode forced\n", force_usb_charging_mode);
+                                                        msm_otg_notify_charger(motg, IDEV_CHG_MIN);
+							break;
+						case 2:
+							dev_info(motg->phy.dev, "WARNING: force_usb_charging_mode=%u, charging in CDP mode forced\n", force_usb_charging_mode);
+							motg->chg_type = USB_CDP_CHARGER;
+							msm_otg_notify_charger(motg, IDEV_CHG_MAX);
+							break;
+						case 3:
+							dev_info(motg->phy.dev, "WARNING: force_usb_charging_mode=%u, charging in DCP mode forced\n", force_usb_charging_mode);
+							/* Enable VDP_SRC */
+							ulpi_write(otg->phy, 0x2, 0x85);
+							pm_runtime_put_sync(otg->phy->dev);
+                                                        motg->chg_type = USB_DCP_CHARGER;
+							msm_otg_notify_charger(motg, IDEV_CHG_MAX);
+							break;
+						case 4:
+							dev_info(motg->phy.dev, "WARNING: force_usb_charging_mode=%u, charging in DCP 2500mA mode forced\n", force_usb_charging_mode);
+							/* Enable VDP_SRC */
+							ulpi_write(otg->phy, 0x2, 0x85);
+							pm_runtime_put_sync(otg->phy->dev);
+                                                        motg->chg_type = USB_DCP_CHARGER;
+							msm_otg_notify_charger(motg, 2500);
+							break;
+						default:
+							break;
+					}
+					if (!force_usb_charging_mode)
+						mod_timer(&motg->chg_check_timer,
+									CHG_RECHECK_DELAY);
 					break;
 				default:
 					break;
@@ -3761,6 +3802,9 @@ static int otg_power_get_property_usb(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		val->intval = otg_get_prop_usbin_voltage_now(motg);
 		break;
+	case POWER_SUPPLY_PROP_FORCE_MODE:
+		val->intval = force_usb_charging_mode;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -3794,6 +3838,11 @@ static int otg_power_set_property_usb(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_HEALTH:
 		motg->usbin_health = val->intval;
 		break;
+	case POWER_SUPPLY_PROP_FORCE_MODE:
+		if (val->intval > 3 || val->intval < 0)
+			return -EINVAL;
+		force_usb_charging_mode = val->intval;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -3811,6 +3860,7 @@ static int otg_power_property_is_writeable_usb(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_ONLINE:
 	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
+	case POWER_SUPPLY_PROP_FORCE_MODE:
 		return 1;
 	default:
 		break;
@@ -3832,6 +3882,7 @@ static enum power_supply_property otg_pm_power_props_usb[] = {
 	POWER_SUPPLY_PROP_SCOPE,
 	POWER_SUPPLY_PROP_TYPE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
+	POWER_SUPPLY_PROP_FORCE_MODE,
 };
 
 const struct file_operations msm_otg_bus_fops = {
